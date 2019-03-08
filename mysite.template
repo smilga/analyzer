@@ -1,0 +1,31 @@
+server {
+    proxy_buffering off;
+
+    listen 80;
+
+    server_name ${NGINX_HOST} www.${NGINX_HOST};
+
+    location / {
+        proxy_pass http://web:${WEB_PORT};
+    }
+
+    #return 301 https://$host$request_uri;
+}
+
+#server {
+#
+#    listen 443;
+#
+#    server_name ${NGINX_HOST} www.${NGINX_HOST};
+#
+#    access_log /var/log/nginx/${NGINX_HOST}-access.log;
+#    error_log /var/log/nginx/${NGINX_HOST}-error.log;
+#
+#    ssl_certificate      /etc/ssl/private/cert.pem;
+#    ssl_certificate_key  /etc/ssl/private/cert-key.pem;
+#
+#    location / {
+#        proxy_pass web:${WEB_PORT};
+#    }
+#
+#}

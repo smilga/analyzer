@@ -1,0 +1,6 @@
+FROM node:10.15.2-stretch-slim
+
+ENV HOST 0.0.0.0
+ENV NODE_ENV=development
+
+WORKDIR /analyzer-web
