@@ -59,19 +59,19 @@ func (s *WebsiteStore) Delete(ID uuid.UUID) error {
 var websites = []*api.Website{
 	&api.Website{
 		ID:       uuid.Must(uuid.NewV4(), nil),
-		UserID:   uuid.Must(uuid.FromString("3fba8a7b-274c-4613-a7a8-1cae01ce8a98")),
+		UserID:   uuid.Must(uuid.FromString("00311786-2151-4b9a-bb3a-45e7227886f6")),
 		URL:      "https://1a.lv",
 		Services: nil,
 	},
 	&api.Website{
 		ID:       uuid.Must(uuid.NewV4(), nil),
-		UserID:   uuid.Must(uuid.FromString("3fba8a7b-274c-4613-a7a8-1cae01ce8a98")),
+		UserID:   uuid.Must(uuid.FromString("00311786-2151-4b9a-bb3a-45e7227886f6")),
 		URL:      "https://220.lv",
 		Services: nil,
 	},
 	&api.Website{
 		ID:       uuid.Must(uuid.NewV4(), nil),
-		UserID:   uuid.Must(uuid.FromString("3fba8a7b-274c-4613-a7a8-1cae01ce8a98")),
+		UserID:   uuid.Must(uuid.FromString("00311786-2151-4b9a-bb3a-45e7227886f6")),
 		URL:      "https://nuko.lv",
 		Services: nil,
 	},
@@ -83,19 +83,19 @@ var websites = []*api.Website{
 	},
 	&api.Website{
 		ID:       uuid.Must(uuid.NewV4(), nil),
-		UserID:   uuid.Must(uuid.FromString("3fba8a7b-274c-4613-a7a8-1cae01ce8a98")),
+		UserID:   uuid.Must(uuid.FromString("00311786-2151-4b9a-bb3a-45e7227886f6")),
 		URL:      "https://maxtraffic.com",
 		Services: nil,
 	},
 	&api.Website{
 		ID:       uuid.Must(uuid.NewV4(), nil),
-		UserID:   uuid.Must(uuid.FromString("3fba8a7b-274c-4613-a7a8-1cae01ce8a98")),
+		UserID:   uuid.Must(uuid.FromString("00311786-2151-4b9a-bb3a-45e7227886f6")),
 		URL:      "https://given.lv",
 		Services: nil,
 	},
 }
 
-func NewWebsitesStore() *WebsiteStore {
+func NewWebsiteStore() *WebsiteStore {
 	return &WebsiteStore{
 		websites: websites,
 	}

@@ -20,13 +20,12 @@ type WebsiteStorage interface {
 	Delete(uuid.UUID) error
 }
 
-type WebsiteID string
-
 type Website struct {
 	ID         uuid.UUID
 	UserID     uuid.UUID
 	URL        string
-	Services   []*ServiceIdentity
+	Services   []*ServiceIdentity `db:"-"`
+	Tags       []*Tag
 	CreatedAt  *time.Time
 	SearchedAt *time.Time
 	DeletedAt  *time.Time

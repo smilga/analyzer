@@ -42,7 +42,7 @@ func (h *Handler) CreateWebsite(w http.ResponseWriter, r *http.Request, _ httpro
 		return
 	}
 
-	h.responseJSON(w, "ok")
+	h.responseJSON(w, website)
 }
 
 func (h *Handler) ImportWebsites(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {

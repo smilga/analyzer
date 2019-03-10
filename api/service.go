@@ -15,6 +15,7 @@ var (
 type ServiceStorage interface {
 	All(rel bool) ([]*Service, error)
 	ByUser(uuid.UUID) ([]*Service, error)
+	ManyByUser(uuid.UUID, []uuid.UUID) ([]*Service, error)
 	Get(uuid.UUID) (*Service, error)
 	Save(*Service) error
 	Delete(uuid.UUID) error
@@ -32,4 +33,13 @@ type Service struct {
 	*ServiceIdentity
 	UserID   uuid.UUID
 	Patterns []*Pattern
+}
+
+func (s *Service) Pattern(id uuid.UUID) (*Pattern, error) {
+	for _, p := range s.Patterns {
+		if p.ID == id {
+			return p, nil
+		}
+	}
+	return nil, errors.New("Pattern not found")
 }

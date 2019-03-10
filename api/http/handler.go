@@ -12,13 +12,18 @@ type Handler struct {
 	ServiceStorage api.ServiceStorage
 	WebsiteStorage api.WebsiteStorage
 	UserStorage    api.UserStorage
+	Analyzer       *api.Analyzer
 }
 
 func NewHandler() *Handler {
 	return &Handler{
 		Auth:           NewJWTAuth(os.Getenv("JWT_SECRET")),
 		ServiceStorage: inmemory.NewServiceStore(),
-		WebsiteStorage: inmemory.NewWebsitesStore(),
+		WebsiteStorage: inmemory.NewWebsiteStore(),
 		UserStorage:    inmemory.NewUserStore(),
+		Analyzer: &api.Analyzer{
+			inmemory.NewResultStore(),
+			inmemory.NewServiceStore(),
+		},
 	}
 }

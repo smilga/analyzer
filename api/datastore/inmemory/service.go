@@ -23,6 +23,16 @@ func (s *ServiceStore) ByUser(id uuid.UUID) ([]*api.Service, error) {
 	return services, nil
 }
 
+func (s *ServiceStore) ManyByUser(id uuid.UUID, ids []uuid.UUID) ([]*api.Service, error) {
+	services := []*api.Service{}
+	for _, service := range s.services {
+		if service.UserID == id && inSlice(service.ID, ids) {
+			services = append(services, service)
+		}
+	}
+	return services, nil
+}
+
 func (s *ServiceStore) Get(ID uuid.UUID) (*api.Service, error) {
 	for _, service := range s.services {
 		if service.ID == ID {
@@ -59,10 +69,10 @@ var services = []*api.Service{
 			Name:    "maxtraffic",
 			LogoURL: "https://assets.mxapis.com/img/maxtraffic-logo-new.png",
 		},
-		uuid.Must(uuid.FromString("3fba8a7b-274c-4613-a7a8-1cae01ce8a98")),
+		uuid.Must(uuid.FromString("00311786-2151-4b9a-bb3a-45e7227886f6")),
 		[]*api.Pattern{
 			&api.Pattern{
-				uuid.Must(uuid.FromString("3fba8a7b-274c-4613-a7a8-1cae01be8a98")),
+				uuid.Must(uuid.FromString("00311786-2151-4b9a-bb3a-45e7227886f6")),
 				api.Resource,
 				"*mt.js*",
 				false,
@@ -72,11 +82,34 @@ var services = []*api.Service{
 	&api.Service{
 		&api.ServiceIdentity{
 			ID:      uuid.Must(uuid.NewV4(), nil),
-			Name:    "pushcrew",
-			LogoURL: "https://images.g2crowd.com/uploads/product/image/social_landscape/social_landscape_1499941730/pushcrew.png",
+			Name:    "google analytics",
+			LogoURL: "https://s3.amazonaws.com/ceblog/wp-content/uploads/2018/03/24172201/why-ga-inaccurate.jpg",
 		},
-		uuid.Must(uuid.FromString("3fba8a7b-274c-4613-a7a8-1cae01ce8a98")),
-		[]*api.Pattern{},
+		uuid.Must(uuid.FromString("00311786-2151-4b9a-bb3a-45e7227886f6")),
+		[]*api.Pattern{
+			&api.Pattern{
+				uuid.Must(uuid.FromString("00311786-2151-4b9a-bb3a-45e7227886f6")),
+				api.Resource,
+				"https://www.google-analytics.com/analytics.js*",
+				false,
+			},
+		},
+	},
+	&api.Service{
+		&api.ServiceIdentity{
+			ID:      uuid.Must(uuid.NewV4(), nil),
+			Name:    "facebook analytics",
+			LogoURL: "https://scontent.frix1-1.fna.fbcdn.net/v/t39.2365-6/28985538_1634015629967706_6299852360415969280_n.png?_nc_cat=100&_nc_ht=scontent.frix1-1.fna&oh=21e83fa842cc814070fa53b97956df2d&oe=5D24F6AB",
+		},
+		uuid.Must(uuid.FromString("00311786-2151-4b9a-bb3a-45e7227886f6")),
+		[]*api.Pattern{
+			&api.Pattern{
+				uuid.Must(uuid.FromString("00311786-2151-4b9a-bb3a-45e7227886f6")),
+				api.Resource,
+				"*fbevents.js*",
+				false,
+			},
+		},
 	},
 	&api.Service{
 		&api.ServiceIdentity{

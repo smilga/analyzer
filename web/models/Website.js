@@ -3,5 +3,6 @@ export default class Website {
         this.ID = ID;
         this.URL = URL;
         this.Services = Services;
+        this.Loading = false;
     }
 }

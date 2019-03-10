@@ -5,7 +5,6 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	uuid "github.com/satori/go.uuid"
-	"github.com/smilga/analyzer/api/analyzer"
 )
 
 func (h *Handler) InspectWebsite(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -28,8 +27,13 @@ func (h *Handler) InspectWebsite(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	analyzer.Analyze(website.URL, services[0])
+	// TODO run in goroutine and when ready post to socket channel
+	// Socket could be service on handler
+	result, err := h.Analyzer.Inspect(website, services)
+	if err != nil {
+		h.responseErr(w, err)
+		return
+	}
 
-	return
-	// TODO run ispection in go routine
+	h.responseJSON(w, result)
 }
