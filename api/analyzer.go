@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
-	"encoding/json"
 
 	uuid "github.com/satori/go.uuid"
 )
