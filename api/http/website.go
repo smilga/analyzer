@@ -29,12 +29,21 @@ func (h *Handler) GetWebsites(w http.ResponseWriter, r *http.Request, _ httprout
 }
 
 func (h *Handler) CreateWebsite(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	id := r.Context().Value(uid)
+	ID, ok := id.(uuid.UUID)
+	if !ok {
+		h.responseErr(w, errors.New("Error getting context value"))
+		return
+	}
+	
 	website := &api.Website{}
 	err := json.NewDecoder(r.Body).Decode(website)
 	if err != nil {
 		h.responseErr(w, err)
 		return
 	}
+	
+	website.UserID = ID
 
 	err = h.WebsiteStorage.Save(website)
 	if err != nil {
