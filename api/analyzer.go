@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"encoding/json"
 
 	uuid "github.com/satori/go.uuid"
 )
@@ -60,6 +61,14 @@ func (a *Analyzer) Inspect(w *Website, services []*Service) (*ShortReport, error
 	for i, us := range userServices {
 		foundServices[i] = us.ServiceIdentity
 	}
+	
+	report, err := a.Report(w)
+	if err != nil {
+		return nil, err
+	}
+	
+	reportStr, _ := json.Marshal(report)
+	fmt.Println(reportStr)
 
 	return &ShortReport{
 		WebsiteID:  w.ID,
