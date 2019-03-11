@@ -9,7 +9,7 @@ RUN apk update && apk upgrade && \
         apk add nodejs-npm && \
         apk add --no-cache git
 
-WORKDIR /analyzer-api/pupetteer
+WORKDIR /analyzer-api/puppeteer
 
 RUN npm install
 
