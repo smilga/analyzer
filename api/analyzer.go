@@ -67,7 +67,7 @@ func (a *Analyzer) Inspect(w *Website, services []*Service) (*ShortReport, error
 	}
 	
 	reportStr, _ := json.Marshal(report)
-	fmt.Println(reportStr)
+	fmt.Println(string(reportStr))
 
 	return &ShortReport{
 		WebsiteID:  w.ID,
