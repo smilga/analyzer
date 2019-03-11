@@ -9,3 +9,4 @@ COPY . .
 
 RUN npm install --global cross-env
 RUN npm install
+RUN npm run build
