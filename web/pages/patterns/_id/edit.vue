@@ -7,6 +7,7 @@
 <script>
 import CreateEditPattern from '@/components/CreateEditPattern';
 import Pattern from '@/models/Pattern';
+import Tag from '@/models/Tag';
 
 export default {
     middleware: 'authenticated',
@@ -24,8 +25,18 @@ export default {
     },
     methods: {
         save() {
+            this.fixTags();
+
             this.$axios.post('/api/patterns', this.pattern)
                 .then(() => this.$router.push({ path: '/patterns' }));
+        },
+        fixTags() {
+            this.pattern.tags = this.pattern.tags.map((t) => {
+                if (typeof t === 'string') {
+                    return new Tag({ Value: t });
+                }
+                return t;
+            });
         }
     }
 };

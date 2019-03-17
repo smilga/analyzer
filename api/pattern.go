@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	uuid "github.com/satori/go.uuid"
@@ -35,13 +34,12 @@ func (id PatternID) MarshalText() (text []byte, err error) {
 }
 
 func (id *PatternID) UnmarshalJSON(data []byte) error {
-	fmt.Println(string(data))
-	uid, err := uuid.FromBytes(data)
+	uid := uuid.UUID{}
+	err := uid.UnmarshalText(data[1 : (len(data))-1])
 	if err != nil {
 		return err
 	}
-	p := PatternID(uid)
-	id = &p
+	(*id) = PatternID(uid)
 	return nil
 }
 

@@ -50,7 +50,7 @@ func NewPatternStore() *PatternStore {
 
 var patterns = []*api.Pattern{
 	&api.Pattern{
-		ID:          api.PatternID(uuid.Must(uuid.FromString("a78f6e8d-d0f9-46a0-a8d2-e164dda4bd2b"))),
+		ID:          api.PatternID(uuid.NewV4()),
 		Type:        api.Resource,
 		Value:       "*mt.js*",
 		Description: "MaxTraffic",
@@ -59,7 +59,7 @@ var patterns = []*api.Pattern{
 		DeletedAt:   nil,
 	},
 	&api.Pattern{
-		ID:          api.PatternID(uuid.Must(uuid.FromString("e84b395d-0455-4e27-85dd-211accdc2d4e"))),
+		ID:          api.PatternID(uuid.NewV4()),
 		Type:        api.Resource,
 		Value:       "https://www.google-analytics.com/analytics.js*",
 		Description: "Google analytics",
@@ -68,7 +68,7 @@ var patterns = []*api.Pattern{
 		DeletedAt:   nil,
 	},
 	&api.Pattern{
-		ID:          api.PatternID(uuid.Must(uuid.FromString("16d26858-ca9d-4f34-9f22-0f9245748459"))),
+		ID:          api.PatternID(uuid.NewV4()),
 		Type:        api.Resource,
 		Value:       "*fbevents.js*",
 		Description: "FB analytics",
