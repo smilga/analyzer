@@ -1,4 +1,4 @@
-package inmemory
+package inmem
 
 import (
 	"errors"
@@ -16,13 +16,13 @@ var (
 
 var users = []*api.User{
 	&api.User{
-		ID:       uuid.Must(uuid.FromString("3fba8a7b-274c-4613-a7a8-1cae01ce8a98")),
+		ID:       api.UserID(uuid.Must(uuid.FromString("3fba8a7b-274c-4613-a7a8-1cae01ce8a98"))),
 		Name:     "Kaspars Smilga",
 		Email:    "smilga.kaspars@gmail.com",
 		Password: cryptPass("pass"),
 	},
 	&api.User{
-		ID:       uuid.Must(uuid.FromString("00311786-2151-4b9a-bb3a-45e7227886f6")),
+		ID:       api.UserID(uuid.Must(uuid.FromString("00311786-2151-4b9a-bb3a-45e7227886f6"))),
 		Name:     "Admin",
 		Email:    "admin@inspected.tech",
 		Password: cryptPass("pass"),
@@ -51,7 +51,7 @@ func (s *UserStore) ByEmail(email string) (*api.User, error) {
 	return nil, ErrUserNotFound
 }
 
-func (s *UserStore) ByID(uid uuid.UUID) (*api.User, error) {
+func (s *UserStore) ByID(uid api.UserID) (*api.User, error) {
 	for _, u := range s.users {
 		if u.ID == uid {
 			return u, nil

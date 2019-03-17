@@ -16,23 +16,30 @@ func main() {
 
 	g := http.NewGuard(&http.GuardConfig{
 		Auth:    http.NewJWTAuth(os.Getenv("JWT_SECRET")),
-		Allowed: []string{"/api/login", "api/logout"},
+		Allowed: []string{"/api/login", "api/logout", "/api/ws"},
 	})
 
-	h := http.NewHandler()
+	h := http.NewTestHandler()
 
 	router.POST("/api/login", h.Login)
 	router.GET("/api/logout", h.Logout)
 	router.GET("/api/me", h.Me)
 
-	router.GET("/api/services", h.GetServices)
-	router.POST("/api/services", h.CreateService)
-	router.GET("/api/services/:id", h.GetService)
-	router.POST("/api/services/:id", h.UpdateService)
-	router.GET("/api/services/:id/delete", h.DeleteService)
+	router.GET("/api/patterns", h.Patterns)
+	router.POST("/api/patterns", h.SavePattern)
+	router.GET("/api/patterns/:id", h.Pattern)
+	router.GET("/api/patterns/:id/delete", h.DeletePattern)
 
-	router.GET("/api/websites", h.GetWebsites)
-	router.POST("/api/websites", h.CreateWebsite)
+	router.GET("/api/tags", h.Tags)
+	router.POST("/api/tags", h.SaveTag)
+	router.GET("/api/tags/:id", h.Tag)
+
+	router.GET("/api/filters", h.Filters)
+	router.GET("/api/filters/:id", h.Filter)
+	router.POST("/api/filters/:id", h.SaveFilter)
+
+	router.GET("/api/websites", h.Websites)
+	router.POST("/api/websites", h.SaveWebsite)
 	router.POST("/api/websites/import", h.ImportWebsites)
 
 	router.GET("/api/inspect/websites/:id", h.InspectWebsite)

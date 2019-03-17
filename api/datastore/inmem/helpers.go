@@ -1,4 +1,4 @@
-package inmemory
+package inmem
 
 import uuid "github.com/satori/go.uuid"
 

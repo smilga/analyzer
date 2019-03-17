@@ -9,56 +9,41 @@ class Match {
     }
 }
 
-class DetectedService {
-    constructor(id, match) {
-        this.serviceId = id;
-        this.match = match;
-    }
-}
-
-// TODO check for Mandatory checkbox
 module.exports = class Analyzer {
-    constructor(services) {
-        this.services = services;
+    constructor(patterns) {
+        this.patterns = patterns;
         this.resourceURLs = [];
-        this.detectedServices = [];
     }
 
     analyze(page) {
-        this.services.forEach(s => this.scanForService(s));
-        return this.detectedServices;
-    }
+        const resourcePatterns = this.extractPatterns(RESOURCE);
 
-    scanForService(service) {
-        const patterns = this.extractPatterns(service, RESOURCE);
-        let matched = [];
-
-        patterns.forEach(pattern => {
-            matched = matched.concat(this.resourceURLMatch(pattern));
+        let matches = [];
+        resourcePatterns.forEach(p => {
+            matches = matches.concat(this.resourceURLMatch(p));
         });
 
-        if(matched.length > 0) {
-            this.detectedServices.push(
-                new DetectedService(service.id, matched)
-            );
-        }
+        // get other pattern types and analyze them
+
+        return matches;
     }
 
     resourceURLMatch(pattern) {
-        const discovered = [];
+        const matches = [];
         this.resourceURLs.forEach(url => {
             if(this.searchString(url, pattern.value)) {
-                discovered.push(new Match(pattern.id, url));
+                matches.push(new Match(pattern.id, url));
             }
         });
-        return discovered;
+        return matches;
     }
 
     searchString(str, pattern) {
+        // TODO use some library
         return new RegExp('^' + pattern.replace(/\*/g, '.*') + '$').test(str);
     };
 
     extractPatterns(service, type) {
-        return service.patterns.filter(p => p.type = type);
+        return this.patterns.filter(p => p.type = type);
     }
 }

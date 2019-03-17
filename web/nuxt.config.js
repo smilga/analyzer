@@ -1,4 +1,4 @@
-const pkg = require('./package')
+const pkg = require('./package');
 
 module.exports = {
     mode: 'universal',
@@ -42,21 +42,14 @@ module.exports = {
     axios: {
         baseURL: `http://api:${process.env.API_PORT}`,
         proxy: true,
-        withCredentials: true,
+        withCredentials: true
     },
 
     proxy: {
-        '/api': { target: `http://api:${process.env.API_PORT}`, secure: false },
+        '/api': { target: `http://api:${process.env.API_PORT}`, secure: false, ws: true }
     },
 
-    /*
-     ** Build configuration
-     */
     build: {
-        transpile: [/^element-ui/],
-
-        /*
-         ** You can extend webpack config here
-         */
+        transpile: [/^element-ui/]
     }
-}
+};

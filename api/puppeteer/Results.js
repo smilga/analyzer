@@ -1,6 +1,6 @@
 module.exports = class Response {
-    constructor({ duration, detected } = {}) {
+    constructor({ duration, matches } = {}) {
         this.duration = duration;
-        this.detectedServices = detected;
+        this.matches = matches;
     }
 }

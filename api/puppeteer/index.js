@@ -1,17 +1,16 @@
 'use strict';
 
 const puppeteer = require('puppeteer');
-const Service = require('./Service');
 const Analyzer = require('./Analyzer');
 const Results = require('./Results');
+const Pattern = require('./Pattern');
 
 const tStart = new Date();
 
 const args = process.argv.slice(2);
 const website = args[0];
-const services = JSON.parse(args[1]).map(s => new Service(s));
-
-const analyzer = new Analyzer(services);
+const patterns = JSON.parse(args[1]).map(s => new Pattern(s));
+const analyzer = new Analyzer(patterns);
 
 const connConfig = {
     ignoreHTTPSErrors: true,
@@ -33,7 +32,7 @@ const requestIntercept = req => {
 (async() => {
     let browser = null;
     let page = null;
-    let detected = [];
+    let matches = [];
 
     try {
         browser = await puppeteer.connect(connConfig);
@@ -48,14 +47,14 @@ const requestIntercept = req => {
     }
 
     try {
-        detected = analyzer.analyze(page);
+        matches = analyzer.analyze(page);
     } catch (e) {
         console.error(e)
         await browser.close();
     }
 
     const duration = (new Date() - tStart) / 1000;
-    const res = new Results({ duration, detected });
+    const res = new Results({ duration, matches });
 
     console.log(JSON.stringify(res));
 

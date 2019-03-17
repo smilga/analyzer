@@ -3,3 +3,6 @@
 web/node_modules/
 api/puppeteer/node_modules/
 web/.nuxt/
+web/tags
+api/tags
+tags

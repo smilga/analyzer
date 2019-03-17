@@ -5,6 +5,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	uuid "github.com/satori/go.uuid"
+	"github.com/smilga/analyzer/api"
 )
 
 // Error definitions
@@ -23,30 +24,31 @@ type JWTAuth struct {
 }
 
 // Valid returns if auth token is valid
-func (a *JWTAuth) Valid(tokenString string) (bool, uuid.UUID, error) {
+func (a *JWTAuth) Valid(tokenString string) (bool, api.UserID, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte(a.Secret), nil
 	})
 
 	if err != nil {
-		return false, uuid.UUID{}, err
+		return false, api.UserID{}, err
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
 
 	if userID, ok := claims["UserID"].(string); !ok {
-		return false, uuid.UUID{}, ErrParsingClaims
+		return false, api.UserID{}, ErrParsingClaims
 	} else {
-		ID, err := uuid.FromString(userID)
+		uid, err := uuid.FromString(userID)
 		if err != nil {
-			return false, uuid.UUID{}, err
+			return false, api.UserID{}, err
 		}
-		return true, ID, nil
+
+		return true, api.UserID(uid), nil
 	}
 }
 
 // Sign returns new access token
-func (a *JWTAuth) Sign(ID uuid.UUID) (string, error) {
+func (a *JWTAuth) Sign(ID api.UserID) (string, error) {
 	claims := Claims{
 		ID.String(),
 		jwt.StandardClaims{

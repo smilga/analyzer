@@ -1,29 +1,44 @@
 package http
 
 import (
+	"net/http"
 	"os"
 
 	"github.com/smilga/analyzer/api"
-	"github.com/smilga/analyzer/api/datastore/inmemory"
+	"github.com/smilga/analyzer/api/datastore/inmem"
 )
 
 type Handler struct {
 	Auth           api.Auth
-	ServiceStorage api.ServiceStorage
 	WebsiteStorage api.WebsiteStorage
 	UserStorage    api.UserStorage
+	PatternStorage api.PatternStorage
+	TagStorage     api.TagStorage
+	FilterStorage  api.FilterStorage
 	Analyzer       *api.Analyzer
 }
 
-func NewHandler() *Handler {
+func (h *Handler) AuthID(r *http.Request) (api.UserID, error) {
+	id := r.Context().Value(uidKey)
+	uid, ok := id.(api.UserID)
+	if !ok {
+		return uid, api.ErrTokenError
+	}
+
+	return uid, nil
+}
+
+func NewTestHandler() *Handler {
 	return &Handler{
 		Auth:           NewJWTAuth(os.Getenv("JWT_SECRET")),
-		ServiceStorage: inmemory.NewServiceStore(),
-		WebsiteStorage: inmemory.NewWebsiteStore(),
-		UserStorage:    inmemory.NewUserStore(),
+		WebsiteStorage: inmem.NewWebsiteStore(),
+		UserStorage:    inmem.NewUserStore(),
+		PatternStorage: inmem.NewPatternStore(),
+		TagStorage:     inmem.NewTagStore(),
+		FilterStorage:  inmem.NewFilterStore(),
 		Analyzer: &api.Analyzer{
-			inmemory.NewResultStore(),
-			inmemory.NewServiceStore(),
+			PatternStorage: inmem.NewPatternStore(),
+			WebsiteStorage: inmem.NewWebsiteStore(),
 		},
 	}
 }

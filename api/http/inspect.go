@@ -5,23 +5,18 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	uuid "github.com/satori/go.uuid"
+	"github.com/smilga/analyzer/api"
 )
 
 func (h *Handler) InspectWebsite(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
-	uid, err := uuid.FromString(id)
+	wid, err := uuid.FromString(id)
 	if err != nil {
 		h.responseErr(w, err)
 		return
 	}
 
-	services, err := h.ServiceStorage.All(true)
-	if err != nil {
-		h.responseErr(w, err)
-		return
-	}
-
-	website, err := h.WebsiteStorage.Get(uid)
+	website, err := h.WebsiteStorage.Get(api.WebsiteID(wid))
 	if err != nil {
 		h.responseErr(w, err)
 		return
@@ -29,11 +24,11 @@ func (h *Handler) InspectWebsite(w http.ResponseWriter, r *http.Request, ps http
 
 	// TODO run in goroutine and when ready post to socket channel
 	// Socket could be service on handler
-	result, err := h.Analyzer.Inspect(website, services)
+	err = h.Analyzer.Inspect(website)
 	if err != nil {
 		h.responseErr(w, err)
 		return
 	}
 
-	h.responseJSON(w, result)
+	h.responseJSON(w, website)
 }

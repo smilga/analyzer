@@ -3,23 +3,20 @@ package http
 import (
 	"encoding/csv"
 	"encoding/json"
-	"errors"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
-	uuid "github.com/satori/go.uuid"
 	"github.com/smilga/analyzer/api"
 )
 
-func (h *Handler) GetWebsites(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	id := r.Context().Value(uid)
-	ID, ok := id.(uuid.UUID)
-	if !ok {
-		h.responseErr(w, errors.New("Error getting context value"))
+func (h *Handler) Websites(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	uid, err := h.AuthID(r)
+	if err != nil {
+		h.responseErr(w, err)
 		return
 	}
 
-	websites, err := h.WebsiteStorage.ByUser(ID)
+	websites, err := h.WebsiteStorage.ByUser(uid)
 	if err != nil {
 		h.responseErr(w, err)
 		return
@@ -28,22 +25,21 @@ func (h *Handler) GetWebsites(w http.ResponseWriter, r *http.Request, _ httprout
 	h.responseJSON(w, websites)
 }
 
-func (h *Handler) CreateWebsite(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	id := r.Context().Value(uid)
-	ID, ok := id.(uuid.UUID)
-	if !ok {
-		h.responseErr(w, errors.New("Error getting context value"))
-		return
-	}
-	
-	website := &api.Website{}
-	err := json.NewDecoder(r.Body).Decode(website)
+func (h *Handler) SaveWebsite(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	uid, err := h.AuthID(r)
 	if err != nil {
 		h.responseErr(w, err)
 		return
 	}
-	
-	website.UserID = ID
+
+	website := &api.Website{}
+	err = json.NewDecoder(r.Body).Decode(website)
+	if err != nil {
+		h.responseErr(w, err)
+		return
+	}
+
+	website.UserID = uid
 
 	err = h.WebsiteStorage.Save(website)
 	if err != nil {

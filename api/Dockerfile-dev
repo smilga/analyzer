@@ -1,4 +1,4 @@
-FROM golang:1.11.0-alpine3.8
+FROM golang:1.12.1-alpine3.9
 
 ENV CGO_ENABLED=0
 
@@ -9,4 +9,3 @@ RUN apk update && apk upgrade && \
         go get github.com/markbates/refresh
 
 WORKDIR /analyzer-api
-

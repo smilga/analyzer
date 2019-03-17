@@ -4,20 +4,27 @@
         class="el-menu-top"
         background-color="white"
         text-color="#545c64"
-        active-text-color="#000000">
-
+        active-text-color="#000000"
+        >
         <template v-if="user">
             <nuxt-link to="/websites">
                 <el-menu-item index="websites">
-                    <i class="el-icon-menu"></i>
-                    <span>Websites</span>
+                    <i class="el-icon-menu" />
+                        <span>Websites</span>
                 </el-menu-item>
             </nuxt-link>
 
-            <nuxt-link to="/services">
-                <el-menu-item index="services">
-                    <i class="el-icon-setting"></i>
-                    <span>Services</span>
+            <nuxt-link to="/patterns">
+                <el-menu-item index="patterns">
+                    <i class="el-icon-search" />
+                        <span>Patterns</span>
+                </el-menu-item>
+            </nuxt-link>
+
+            <nuxt-link to="/filters">
+                <el-menu-item index="filters">
+                    <i class="el-icon-sort"/>
+                        <span>Filters</span>
                 </el-menu-item>
             </nuxt-link>
         </template>
@@ -27,18 +34,20 @@
                 <el-dropdown class="user-dropdown">
                     <div class="el-dropdown-link">
                         {{ user.Email }}
-                        <i class="el-icon-arrow-down el-icon--right"></i>
+                        <i class="el-icon-arrow-down el-icon--right" />
                     </div>
                     <el-dropdown-menu slot="dropdown">
-                        <el-dropdown-item @click.native="logout">Logout</el-dropdown-item>
+                        <el-dropdown-item @click.native="logout">
+                            Logout
+                        </el-dropdown-item>
                     </el-dropdown-menu>
                 </el-dropdown>
             </template>
             <template v-else>
                 <nuxt-link to="/login">
                     <el-menu-item index="4">
-                        <i class="el-icon-setting"></i>
-                        <span>Login</span>
+                        <i class="el-icon-setting" />
+                            <span>Login</span>
                     </el-menu-item>
                 </nuxt-link>
             </template>
@@ -56,14 +65,14 @@ export default {
     methods: {
         logout() {
             this.$axios.get('api/logout')
-            .then(() => {
-                this.$store.commit('auth/setUser', null);
-                this.$store.commit('auth/setToken', null);
-                this.$router.push({ name: 'login' })
-            })
+                .then(() => {
+                    this.$store.commit('auth/setUser', null);
+                    this.$store.commit('auth/setToken', null);
+                    this.$router.push({ name: 'login' });
+                });
         }
-    },
-}
+    }
+};
 </script>
 
 <style lang="scss">

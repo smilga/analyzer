@@ -1,14 +1,25 @@
+import Tag from '@/models/Tag';
+
 export const TYPE = {
     JS_SOURCE: 'js_source',
     HTML: 'html',
-    RESOURCE: 'resource',
-}
+    RESOURCE: 'resource'
+};
 
 export default class Pattern {
-    constructor({ID = null, Mandatory = false, Type, Value = ''} = {}) {
-        this.ID = ID;
-        this.Mandatory = Mandatory
-        this.Type = Type;
-        this.Value = Value;
+    constructor({
+        ID = null,
+        Type = RESOURCE,
+        Value = '',
+        Description = '',
+        Tags = [],
+        CreatedAt = null
+    } = {}) {
+        this.id = ID;
+        this.type = Type;
+        this.value = Value;
+        this.description = Description;
+        this.tags = Tags.map(t => new Tag(t));
+        this.createdAt = CreatedAt;
     }
 }

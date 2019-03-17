@@ -10,8 +10,8 @@ module.exports = {
     extends: [
         '@nuxtjs'
     ],
-    // add your custom rules here
     rules: {
         "indent": ["error", 4],
+        "semi": [2, "always"],
     }
 }

@@ -1,4 +1,4 @@
-FROM golang:1.11.0-alpine3.8
+FROM golang:1.12.1-alpine3.9
 
 WORKDIR /analyzer-api
 

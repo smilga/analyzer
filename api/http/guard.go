@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	uuid "github.com/satori/go.uuid"
 	"github.com/smilga/analyzer/api"
 )
 
@@ -19,7 +18,7 @@ var (
 type contextKey string
 
 const (
-	uid contextKey = "uid"
+	uidKey contextKey = "uid"
 )
 
 type Guard struct {
@@ -49,7 +48,7 @@ func (g *Guard) Protect(h http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), uid, id)
+		ctx := context.WithValue(r.Context(), uidKey, id)
 		h.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -63,19 +62,19 @@ func (g *Guard) isAllowedRoute(URI string) bool {
 	return false
 }
 
-func (g *Guard) authorize(r *http.Request) (uuid.UUID, error) {
+func (g *Guard) authorize(r *http.Request) (api.UserID, error) {
 	token, err := parseBearerHeader(r)
 	if err != nil {
-		return uuid.UUID{}, err
+		return api.UserID{}, err
 	}
 
 	valid, ID, err := g.Auth.Valid(token)
 	if err != nil {
-		return uuid.UUID{}, err
+		return api.UserID{}, err
 	}
 
 	if !valid {
-		return uuid.UUID{}, ErrInvalidToken
+		return api.UserID{}, err
 	}
 
 	return ID, nil

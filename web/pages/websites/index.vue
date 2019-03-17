@@ -1,69 +1,79 @@
 <template>
-    <div class="websites">
-        <el-button @click="dialog.addWebsite = true" icon="el-icon-circle-plus">Add Website</el-button>
-        <el-upload
-            class="import"
-            action="/api/websites/import"
-            accept=".csv"
-            :headers="{ Authorization: `Bearer ${$store.state.auth.token}` }"
-            :on-success="successImport"
-            >
-            <el-button icon="el-icon-circle-plus">Import Websites</el-button>
-            <div slot="tip" class="el-upload__tip">csv file with plain url list</div>
-        </el-upload>
-        <el-table
-            class="website-table"
-            :data="websites"
-            style="width: 100%">
-            <el-table-column
-                prop="URL"
-                label="URL"
-                width="200">
-            </el-table-column>
-            <el-table-column
-                prop="SearchedAt"
-                label="SearchedAt"
-                width="100">
-            </el-table-column>
-            <el-table-column
-                cell-class-name="service-column"
-                prop="Services"
-                label="Services">
-                <template slot-scope="scope">
-                    <img
-                        v-for="s in scope.row.Services"
-                        :key="scope.row.ID + s.ID"
-                        height="25"
-                        class="service-preview"
-                        :src="s.LogoURL"
-                        alt="">
-                </template>
-            </el-table-column>
-            <el-table-column
-                prop=""
-                width="50"
-                label="">
-                <template slot-scope="scope">
-                    <span class="inspect" @click="inspect(scope.row)">
-                        <i :class="[ scope.row.Loading === true ? 'loading' : '', 'el-icon-refresh' ]"></i>
-                    </span>
-                </template>
-            </el-table-column>
-        </el-table>
+  <div class="websites">
+    <el-button icon="el-icon-circle-plus" @click="dialog.addWebsite = true">
+      Add Website
+    </el-button>
+    <el-upload
+      class="import"
+      action="/api/websites/import"
+      accept=".csv"
+      :headers="{ Authorization: `Bearer ${$store.state.auth.token}` }"
+      :on-success="successImport"
+    >
+      <el-button icon="el-icon-circle-plus">
+        Import Websites
+      </el-button>
+      <div slot="tip" class="el-upload__tip">
+        csv file with plain url list
+      </div>
+    </el-upload>
+    <el-table
+      class="website-table"
+      :data="websites"
+      style="width: 100%"
+    >
+      <el-table-column
+        prop="URL"
+        label="URL"
+        width="200"
+      />
+      <el-table-column
+        prop="SearchedAt"
+        label="SearchedAt"
+        width="100"
+      />
+      <el-table-column
+        cell-class-name="service-column"
+        prop="Services"
+        label="Services"
+      >
+        <template slot-scope="scope">
+          <img
+            v-for="s in scope.row.Services"
+            :key="scope.row.ID + s.ID"
+            height="25"
+            class="service-preview"
+            :src="s.LogoURL"
+            alt=""
+          >
+        </template>
+      </el-table-column>
+      <el-table-column
+        prop=""
+        width="50"
+        label=""
+      >
+        <template slot-scope="scope">
+          <span class="inspect" @click="inspect(scope.row)">
+            <i :class="[ scope.row.Loading === true ? 'loading' : '', 'el-icon-refresh' ]" />
+          </span>
+        </template>
+      </el-table-column>
+    </el-table>
 
-        <el-dialog
-            title="Add Website"
-            :visible="dialog.addWebsite"
-            width="30%"
-            >
-            <span>Website URL</span>
-            <el-input placeholder="https://iprof.lv" v-model="websiteURL"></el-input>
-            <span slot="footer" class="dialog-footer">
-                <el-button @click="dialog.addWebsite = false">Cancel</el-button>
-                <el-button @click="addWebsite">Confirm</el-button>
-            </span>
-        </el-dialog>
-    </div>
+    <el-dialog
+      title="Add Website"
+      :visible="dialog.addWebsite"
+      width="30%"
+    >
+      <span>Website URL</span>
+      <el-input v-model="websiteURL" placeholder="https://iprof.lv" />
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="dialog.addWebsite = false">Cancel</el-button>
+        <el-button @click="addWebsite">Confirm</el-button>
+      </span>
+    </el-dialog>
+  </div>
 </template>
 
 <script>
@@ -71,29 +81,29 @@ import Website from '@/models/Website';
 
 export default {
     middleware: 'authenticated',
-    asyncData ({ app }) {
-        return app.$axios.get('/api/websites')
-            .then(res => ({ websites: res.data.map(w => new Website(w)) }))
-    },
     data() {
         return {
             websites: [],
             dialog: {
                 addWebsite: false
             },
-            websiteURL: '',
-        }
+            websiteURL: ''
+        };
+    },
+    asyncData({ app }) {
+        return app.$axios.get('/api/websites')
+            .then(res => ({ websites: res.data.map(w => new Website(w)) }));
     },
     methods: {
         successImport(websites) {
             this.websites = this.websites.concat(
-                websites.map(w => new Website({URL: w.URL}))
+                websites.map(w => new Website({ URL: w.URL }))
             );
         },
         addWebsite() {
             const w = new Website({ URL: this.websiteURL });
             this.$axios.post('/api/websites', w)
-                .then(res => {
+                .then((res) => {
                     w.ID = res.data.ID;
                     this.websites.push(w);
                     this.websiteURL = '';
@@ -103,21 +113,21 @@ export default {
         inspect(website) {
             website.Loading = true;
             this.$axios.get(`/api/inspect/websites/${website.ID}`)
-                .then(res => {
+                .then((res) => {
                     website.SearchedAt = res.data.SearchedAt;
                     website.Services = res.data.Services;
                     website.Loading = false;
                 })
-                .catch(e => {
+                .catch((e) => {
                     this.$notify.error({
                         title: 'Error',
                         message: e.message,
-                        position: 'bottom-right',
+                        position: 'bottom-right'
                     });
-                })
-        },
+                });
+        }
     }
-}
+};
 </script>
 
 <style lang="scss">

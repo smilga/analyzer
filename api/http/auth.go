@@ -6,9 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/julienschmidt/httprouter"
-	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -18,19 +16,17 @@ type Credentials struct {
 }
 
 func (h *Handler) Me(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id := r.Context().Value(uid)
-	ID, ok := id.(uuid.UUID)
-	if !ok {
-		h.responseErr(w, errors.New("Error getting context value"))
-		return
-	}
-
-	user, err := h.UserStorage.ByID(ID)
+	uid, err := h.AuthID(r)
 	if err != nil {
 		h.responseErr(w, err)
 		return
 	}
-	spew.Dump(user)
+
+	user, err := h.UserStorage.ByID(uid)
+	if err != nil {
+		h.responseErr(w, err)
+		return
+	}
 
 	h.responseJSON(w, user)
 	return
@@ -50,6 +46,10 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request, _ httprouter.Par
 	}
 
 	user, err := h.UserStorage.ByEmail(creds.Email)
+	if err != nil {
+		h.responseErr(w, err)
+		return
+	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(creds.Password)); err == nil {
 		token, err := h.Auth.Sign(user.ID)
