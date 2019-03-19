@@ -2,21 +2,21 @@ package http
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/julienschmidt/httprouter"
-	uuid "github.com/satori/go.uuid"
 	"github.com/smilga/analyzer/api"
 )
 
 func (h *Handler) InspectWebsite(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id := ps.ByName("id")
-	wid, err := uuid.FromString(id)
+	idStr := ps.ByName("id")
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		h.responseErr(w, err)
 		return
 	}
 
-	website, err := h.WebsiteStorage.Get(api.WebsiteID(wid))
+	website, err := h.WebsiteStorage.Get(api.WebsiteID(id))
 	if err != nil {
 		h.responseErr(w, err)
 		return

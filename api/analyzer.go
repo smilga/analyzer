@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	"time"
 )
 
 var script = "puppeteer/index.js"
@@ -19,9 +20,16 @@ type Match struct {
 	Value     string
 }
 
+type ResponseTime struct {
+	Loaded        string
+	ResourceCheck string
+	HTMLCheck     string
+	Total         string
+}
+
 type Result struct {
-	Duration int64
-	Matches  []*Match
+	Time    ResponseTime
+	Matches []*Match
 }
 
 // TODO proccess multiple websites at once!
@@ -41,6 +49,9 @@ func (a *Analyzer) Inspect(w *Website) error {
 		return err
 	}
 
+	fmt.Println("======== Pattern string ==========")
+	fmt.Println(string(s))
+
 	var stdOut, stdErr bytes.Buffer
 	cmd := exec.Command("node", script, w.URL, string(s))
 	cmd.Stdout = &stdOut
@@ -59,19 +70,11 @@ func (a *Analyzer) Inspect(w *Website) error {
 	// TODO
 	// store website, user, duration, how many requests tested etc for debug
 	// USER REQUESTS TABLE for pricing, debug etc
-	fmt.Println(result.Duration)
+	fmt.Println(result.Time)
 
-	matchedPatterns := make([]*MatchedPattern, len(result.Matches))
-	for i, m := range result.Matches {
-		p, ok := patternMap[m.PatternID]
-		if !ok {
-			fmt.Println("Error analyzing. Pattern mismatch")
-			continue
-		}
-		matchedPatterns[i] = &MatchedPattern{p, m.Value}
-	}
-
-	w.MatchedPatterns = matchedPatterns
+	now := time.Now()
+	w.MatchedPatterns = result.Matches
+	w.SearchedAt = &now
 
 	err = a.WebsiteStorage.Save(w)
 	if err != nil {

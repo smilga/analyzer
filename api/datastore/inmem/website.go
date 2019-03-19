@@ -1,7 +1,6 @@
 package inmem
 
 import (
-	uuid "github.com/satori/go.uuid"
 	"github.com/smilga/analyzer/api"
 )
 
@@ -33,6 +32,16 @@ func (s *WebsiteStore) Get(id api.WebsiteID) (*api.Website, error) {
 }
 
 func (s *WebsiteStore) Save(target *api.Website) error {
+	if target.ID == 0 {
+		var last int64
+		for _, n := range s.websites {
+			if int64(n.ID) > last {
+				last = int64(n.ID)
+			}
+		}
+		target.ID = api.WebsiteID(last + 1)
+	}
+
 	for i, website := range s.websites {
 		if website.ID == target.ID {
 			s.websites = append(s.websites[:i], s.websites[i+1:]...)
@@ -54,33 +63,33 @@ func (s *WebsiteStore) Delete(id api.WebsiteID) error {
 
 var websites = []*api.Website{
 	&api.Website{
-		ID:     api.WebsiteID(uuid.Must(uuid.NewV4(), nil)),
-		UserID: api.UserID(uuid.Must(uuid.FromString("00311786-2151-4b9a-bb3a-45e7227886f6"))),
+		ID:     1,
+		UserID: 2,
 		URL:    "https://1a.lv",
 	},
 	&api.Website{
-		ID:     api.WebsiteID(uuid.Must(uuid.NewV4(), nil)),
-		UserID: api.UserID(uuid.Must(uuid.FromString("00311786-2151-4b9a-bb3a-45e7227886f6"))),
+		ID:     2,
+		UserID: 2,
 		URL:    "https://220.lv",
 	},
 	&api.Website{
-		ID:     api.WebsiteID(uuid.Must(uuid.NewV4(), nil)),
-		UserID: api.UserID(uuid.Must(uuid.FromString("00311786-2151-4b9a-bb3a-45e7227886f6"))),
+		ID:     3,
+		UserID: 2,
 		URL:    "https://nuko.lv",
 	},
 	&api.Website{
-		ID:     api.WebsiteID(uuid.Must(uuid.NewV4(), nil)),
-		UserID: api.UserID(uuid.Must(uuid.FromString("00311786-2151-4b9a-bb3a-45e7227886f6"))),
+		ID:     4,
+		UserID: 2,
 		URL:    "https://230.lv",
 	},
 	&api.Website{
-		ID:     api.WebsiteID(uuid.Must(uuid.NewV4(), nil)),
-		UserID: api.UserID(uuid.Must(uuid.FromString("00311786-2151-4b9a-bb3a-45e7227886f6"))),
+		ID:     5,
+		UserID: 2,
 		URL:    "https://maxtraffic.com",
 	},
 	&api.Website{
-		ID:     api.WebsiteID(uuid.Must(uuid.NewV4(), nil)),
-		UserID: api.UserID(uuid.Must(uuid.FromString("00311786-2151-4b9a-bb3a-45e7227886f6"))),
+		ID:     6,
+		UserID: 2,
 		URL:    "https://given.lv",
 	},
 }

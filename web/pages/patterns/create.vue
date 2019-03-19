@@ -7,6 +7,7 @@
 <script>
 import CreateEditPattern from '@/components/CreateEditPattern';
 import Tag from '@/models/Tag';
+import Pattern, { TYPE } from '@/models/Pattern';
 
 export default {
     middleware: 'authenticated',
@@ -15,6 +16,7 @@ export default {
     },
     data() {
         return {
+            pattern: new Pattern({ Type: TYPE.RESOURCE })
         };
     },
     methods: {
@@ -26,10 +28,11 @@ export default {
                 .catch(console.warn);
         },
         fixTags() {
-            this.pattern.tags.map((t) => {
+            this.pattern.tags = this.pattern.tags.map((t) => {
                 if (typeof t === 'string') {
                     return new Tag({ Value: t });
                 }
+                return t;
             });
         }
     }

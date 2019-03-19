@@ -35,8 +35,8 @@ func main() {
 	router.GET("/api/tags/:id", h.Tag)
 
 	router.GET("/api/filters", h.Filters)
+	router.POST("/api/filters", h.SaveFilter)
 	router.GET("/api/filters/:id", h.Filter)
-	router.POST("/api/filters/:id", h.SaveFilter)
 
 	router.GET("/api/websites", h.Websites)
 	router.POST("/api/websites", h.SaveWebsite)

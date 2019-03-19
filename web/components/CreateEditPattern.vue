@@ -23,6 +23,7 @@
       <el-form-item label="Tags">
         <el-select
           v-model="pattern.tags"
+          class="tags-list"
           multiple
           filterable
           allow-create
@@ -36,29 +37,6 @@
             :value="item"
           />
         </el-select>
-        <!--
-        <el-tag
-          v-for="tag in pattern.tags"
-          :key="tag.id"
-          closable
-          :disable-transitions="false"
-          @close="removeTag(tag)"
-        >
-          {{ tag.value }}
-        </el-tag>
-        <el-input
-          v-if="newTag !== null"
-          ref="saveTagInput"
-          v-model="newTag.value"
-          class="input-new-tag"
-          size="mini"
-          @keyup.enter.native="saveTag"
-          @blur="saveTag"
-        />
-        <el-button v-else class="button-new-tag" size="small" @click="newTag = new Tag">
-          + New Tag
-        </el-button>
-          -->
       </el-form-item>
     </el-form>
 
@@ -145,5 +123,8 @@ export default {
     width: 90px;
     margin-left: 10px;
     vertical-align: bottom;
+}
+.tags-list {
+    width: 100%;
 }
 </style>

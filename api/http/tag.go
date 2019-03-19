@@ -3,9 +3,9 @@ package http
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/julienschmidt/httprouter"
-	uuid "github.com/satori/go.uuid"
 	"github.com/smilga/analyzer/api"
 )
 
@@ -21,7 +21,7 @@ func (h *Handler) Tags(w http.ResponseWriter, r *http.Request, _ httprouter.Para
 
 func (h *Handler) Tag(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	idStr := ps.ByName("id")
-	id, err := uuid.FromString(idStr)
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		h.responseErr(w, err)
 		return
@@ -44,7 +44,7 @@ func (h *Handler) SaveTag(w http.ResponseWriter, r *http.Request, ps httprouter.
 		return
 	}
 
-	if tag.ID == api.TagID(uuid.UUID{}) {
+	if int64(tag.ID) == 0 {
 		tag = api.NewTag(tag.Value)
 	}
 

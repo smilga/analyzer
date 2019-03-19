@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	"github.com/julienschmidt/httprouter"
-	uuid "github.com/satori/go.uuid"
 	"golang.org/x/net/websocket"
 )
 
@@ -17,7 +16,7 @@ type msg string
 type message struct {
 	Message msg         `json:"message"`
 	Content interface{} `json:"content"`
-	UserID  uuid.UUID   `json:"userID"`
+	UserID  int64       `json:"userID"`
 }
 
 var (
@@ -26,7 +25,7 @@ var (
 
 type WSMessanger struct {
 	sync.Mutex
-	connections map[*websocket.Conn]uuid.UUID
+	connections map[*websocket.Conn]int64
 }
 
 func (ws *WSMessanger) handle(conn *websocket.Conn) {
@@ -51,7 +50,7 @@ func (ws *WSMessanger) handle(conn *websocket.Conn) {
 	}
 }
 
-func (ws *WSMessanger) addConnection(id uuid.UUID, conn *websocket.Conn) {
+func (ws *WSMessanger) addConnection(id int64, conn *websocket.Conn) {
 	fmt.Println("add new connection")
 	ws.Lock()
 	defer ws.Unlock()
@@ -94,7 +93,7 @@ func NewWSHandler() *WSHandler {
 	return &WSHandler{
 		&WSMessanger{
 			sync.Mutex{},
-			make(map[*websocket.Conn]uuid.UUID),
+			make(map[*websocket.Conn]int64),
 		},
 	}
 }

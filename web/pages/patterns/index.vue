@@ -1,5 +1,10 @@
 <template>
   <div class="patterns">
+    <nuxt-link to="/patterns/create">
+      <el-button icon="el-icon-circle-plus" @click="">
+        New Pattern
+      </el-button>
+    </nuxt-link>
     <el-table
       class="pattern-table"
       :data="patterns"
@@ -23,6 +28,8 @@
           <el-tag
             v-for="(tag, i) in scope.row.tags"
             :key="i"
+            class="tag"
+            size="mini"
             type="info"
           >
             {{ tag.value }}
@@ -88,4 +95,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.tag {
+    margin: 0 2px;
+}
 </style>

@@ -3,10 +3,9 @@ package http
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/julienschmidt/httprouter"
-	uuid "github.com/satori/go.uuid"
 	"github.com/smilga/analyzer/api"
 )
 
@@ -22,7 +21,7 @@ func (h *Handler) Patterns(w http.ResponseWriter, r *http.Request, _ httprouter.
 
 func (h *Handler) Pattern(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	idStr := ps.ByName("id")
-	id, err := uuid.FromString(idStr)
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		h.responseErr(w, err)
 		return
@@ -47,18 +46,14 @@ func (h *Handler) SavePattern(w http.ResponseWriter, r *http.Request, ps httprou
 	}
 
 	for _, t := range pattern.Tags {
-		if t.ID == api.TagID(uuid.UUID{}) {
-			tag := api.NewTag(t.Value)
-			err := h.TagStorage.Save(tag)
+		if int64(t.ID) == 0 {
+			err := h.TagStorage.Save(t)
 			if err != nil {
 				h.responseErr(w, err)
 				return
 			}
-			t = tag
 		}
 	}
-
-	spew.Dump(pattern)
 
 	err = h.PatternStorage.Save(pattern)
 	if err != nil {
@@ -71,7 +66,7 @@ func (h *Handler) SavePattern(w http.ResponseWriter, r *http.Request, ps httprou
 
 func (h *Handler) DeletePattern(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	idStr := ps.ByName("id")
-	id, err := uuid.FromString(idStr)
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		h.responseErr(w, err)
 		return

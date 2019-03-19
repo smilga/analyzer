@@ -17,6 +17,9 @@
         csv file with plain url list
       </div>
     </el-upload>
+    <el-button class="rescan" icon="el-icon-refresh">
+      Rescan all
+    </el-button>
     <el-table
       class="website-table"
       :data="websites"
@@ -121,7 +124,7 @@ export default {
                 .catch((e) => {
                     this.$notify.error({
                         title: 'Error',
-                        message: e.message,
+                        message: e.response.data.error,
                         position: 'bottom-right'
                     });
                 });
@@ -152,6 +155,10 @@ export default {
 
 .cell {
     display: flex !important;
+}
+
+.rescan {
+    float: right;
 }
 
 .loading {

@@ -7,6 +7,14 @@ const Pattern = require('./Pattern');
 
 const tStart = new Date();
 
+// TODO to class to handle times
+const time = {
+    loaded: null,
+    resourceCheck: null,
+    htmlCheck: null,
+    total: null
+}
+
 const args = process.argv.slice(2);
 const website = args[0];
 const patterns = JSON.parse(args[1]).map(s => new Pattern(s));
@@ -19,7 +27,7 @@ const connConfig = {
 
 const gotoConf = {
     timeout: 25000,
-    waitUntil: 'networkidle0',
+    waitUntil: 'networkidle2',
 };
 
 const requestIntercept = req => {
@@ -41,20 +49,32 @@ const requestIntercept = req => {
         await page.setRequestInterception(true);
         page.on('request', requestIntercept);
         await page.goto(website, gotoConf);
+
+        time.loaded = ((new Date() - tStart) / 1000).toString();
     } catch (e) {
         console.error(e)
         await browser.close();
     }
 
     try {
-        matches = analyzer.analyze(page);
+        matches = analyzer.analyzeResources();
+        time.resourceCheck = (((new Date() - tStart) / 1000) - time.loaded).toFixed(3);
     } catch (e) {
         console.error(e)
         await browser.close();
     }
 
-    const duration = (new Date() - tStart) / 1000;
-    const res = new Results({ duration, matches });
+    try {
+        matches = matches.concat(await analyzer.analyzeHTML(page));
+        time.htmlCheck = (((new Date() - tStart) / 1000) - time.loaded - time.resourceCheck).toFixed(3);
+    } catch (e) {
+        console.error(e);
+        await browser.close();
+    }
+
+    time.total = ((new Date() - tStart) / 1000).toString();
+
+    const res = new Results({ time, matches });
 
     console.log(JSON.stringify(res));
 

@@ -9,7 +9,7 @@ export const TYPE = {
 export default class Pattern {
     constructor({
         ID = null,
-        Type = RESOURCE,
+        Type = TYPE.RESOURCE,
         Value = '',
         Description = '',
         Tags = [],

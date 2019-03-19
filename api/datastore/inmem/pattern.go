@@ -1,7 +1,6 @@
 package inmem
 
 import (
-	uuid "github.com/satori/go.uuid"
 	"github.com/smilga/analyzer/api"
 )
 
@@ -10,8 +9,18 @@ type PatternStore struct {
 }
 
 func (s *PatternStore) Save(target *api.Pattern) error {
+	if target.ID == 0 {
+		var last int64
+		for _, n := range s.patterns {
+			if int64(n.ID) > last {
+				last = int64(n.ID)
+			}
+		}
+		target.ID = api.PatternID(last + 1)
+	}
+
 	for i, p := range s.patterns {
-		if p.ID == api.PatternID(target.ID) {
+		if p.ID == target.ID {
 			s.patterns = append(s.patterns[:i], s.patterns[i+1:]...)
 		}
 	}
@@ -50,7 +59,7 @@ func NewPatternStore() *PatternStore {
 
 var patterns = []*api.Pattern{
 	&api.Pattern{
-		ID:          api.PatternID(uuid.NewV4()),
+		ID:          1,
 		Type:        api.Resource,
 		Value:       "*mt.js*",
 		Description: "MaxTraffic",
@@ -59,7 +68,7 @@ var patterns = []*api.Pattern{
 		DeletedAt:   nil,
 	},
 	&api.Pattern{
-		ID:          api.PatternID(uuid.NewV4()),
+		ID:          2,
 		Type:        api.Resource,
 		Value:       "https://www.google-analytics.com/analytics.js*",
 		Description: "Google analytics",
@@ -68,10 +77,19 @@ var patterns = []*api.Pattern{
 		DeletedAt:   nil,
 	},
 	&api.Pattern{
-		ID:          api.PatternID(uuid.NewV4()),
+		ID:          3,
 		Type:        api.Resource,
 		Value:       "*fbevents.js*",
 		Description: "FB analytics",
+		Tags:        []*api.Tag{},
+		CreatedAt:   nil,
+		DeletedAt:   nil,
+	},
+	&api.Pattern{
+		ID:          4,
+		Type:        api.HTML,
+		Value:       ".top-menu-item",
+		Description: "Matches given.lv toolbar item",
 		Tags:        []*api.Tag{},
 		CreatedAt:   nil,
 		DeletedAt:   nil,

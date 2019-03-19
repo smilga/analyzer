@@ -2,9 +2,9 @@ package http
 
 import (
 	"errors"
+	"strconv"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	uuid "github.com/satori/go.uuid"
 	"github.com/smilga/analyzer/api"
 )
 
@@ -30,27 +30,26 @@ func (a *JWTAuth) Valid(tokenString string) (bool, api.UserID, error) {
 	})
 
 	if err != nil {
-		return false, api.UserID{}, err
+		return false, 0, err
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
 
 	if userID, ok := claims["UserID"].(string); !ok {
-		return false, api.UserID{}, ErrParsingClaims
+		return false, 0, ErrParsingClaims
 	} else {
-		uid, err := uuid.FromString(userID)
+		id, err := strconv.Atoi(userID)
 		if err != nil {
-			return false, api.UserID{}, err
+			return false, 0, ErrParsingClaims
 		}
-
-		return true, api.UserID(uid), nil
+		return true, api.UserID(id), nil
 	}
 }
 
 // Sign returns new access token
-func (a *JWTAuth) Sign(ID api.UserID) (string, error) {
+func (a *JWTAuth) Sign(id api.UserID) (string, error) {
 	claims := Claims{
-		ID.String(),
+		strconv.Itoa(int(id)),
 		jwt.StandardClaims{
 			Issuer: "Analyzer",
 		},

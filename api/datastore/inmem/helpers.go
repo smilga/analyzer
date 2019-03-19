@@ -1,8 +1,6 @@
 package inmem
 
-import uuid "github.com/satori/go.uuid"
-
-func inSlice(id uuid.UUID, ids []uuid.UUID) bool {
+func inSlice(id int64, ids []int64) bool {
 	for _, i := range ids {
 		if i == id {
 			return true

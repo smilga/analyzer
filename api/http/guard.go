@@ -65,16 +65,16 @@ func (g *Guard) isAllowedRoute(URI string) bool {
 func (g *Guard) authorize(r *http.Request) (api.UserID, error) {
 	token, err := parseBearerHeader(r)
 	if err != nil {
-		return api.UserID{}, err
+		return 0, err
 	}
 
 	valid, ID, err := g.Auth.Valid(token)
 	if err != nil {
-		return api.UserID{}, err
+		return 0, err
 	}
 
 	if !valid {
-		return api.UserID{}, err
+		return 0, err
 	}
 
 	return ID, nil

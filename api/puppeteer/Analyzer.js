@@ -1,3 +1,5 @@
+const toJSON = require('./utils').toJSON;
+
 const JS_SOURCE = 'js_source';
 const HTML = 'html';
 const RESOURCE = 'resource';
@@ -15,35 +17,68 @@ module.exports = class Analyzer {
         this.resourceURLs = [];
     }
 
-    analyze(page) {
-        const resourcePatterns = this.extractPatterns(RESOURCE);
-
+    analyzeResources() {
+        const patterns = this.extractPatterns(RESOURCE);
         let matches = [];
-        resourcePatterns.forEach(p => {
+
+        patterns.forEach(p => {
             matches = matches.concat(this.resourceURLMatch(p));
         });
-
-        // get other pattern types and analyze them
 
         return matches;
     }
 
+    async analyzeHTML(page) {
+        const patterns = this.extractPatterns(HTML);
+        let matches = await this.htmlMatch(page, patterns);
+
+        return matches.map(m => new Match(m.id, JSON.stringify(m.el)));
+    }
+
+    async htmlMatch(page, patterns) {
+        return await page.evaluate((toJSONFn, pat) => {
+            const toJSON = new Function(' return (' + toJSONFn + ').apply(null, arguments)');
+            const matches = [];
+
+            pat.forEach(p => {
+                let node = document.querySelector(p.value)
+                if(node) {
+                    matches.push({
+                        el: toJSON.call(null, node),
+                        id: p.id
+                    });
+                }
+            });
+
+            return matches;
+        }, toJSON.toString(), patterns);
+    }
+
     resourceURLMatch(pattern) {
-        const matches = [];
-        this.resourceURLs.forEach(url => {
-            if(this.searchString(url, pattern.value)) {
-                matches.push(new Match(pattern.id, url));
+        let matchedUrls = this.multiMatch(this.resourceURLs, pattern.value);
+
+        return new Match(pattern.id, matchedUrls.join(","));
+    }
+
+    multiMatch(urls, pattern) {
+        let matches = [];
+        urls.forEach(url => {
+            if(this.searchString(url, pattern)) {
+                matches.push(url);
             }
         });
         return matches;
     }
 
-    searchString(str, pattern) {
-        // TODO use some library
-        return new RegExp('^' + pattern.replace(/\*/g, '.*') + '$').test(str);
-    };
+    extractPatterns(type) {
+        return this.patterns.filter(p => p.type === type);
+    }
 
-    extractPatterns(service, type) {
-        return this.patterns.filter(p => p.type = type);
+    searchString(str, pattern) {
+        return new RegExp('^' + pattern.split(/\*+/).map(this.regExpEscape).join('.*') + '$').test(str);
+    }
+
+    regExpEscape(s) {
+        return s.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
     }
 }

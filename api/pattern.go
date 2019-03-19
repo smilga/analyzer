@@ -3,8 +3,6 @@ package api
 import (
 	"errors"
 	"time"
-
-	uuid "github.com/satori/go.uuid"
 )
 
 var (
@@ -27,21 +25,7 @@ type PatternStorage interface {
 
 type PatternType string
 
-type PatternID uuid.UUID
-
-func (id PatternID) MarshalText() (text []byte, err error) {
-	return uuid.UUID(id).MarshalText()
-}
-
-func (id *PatternID) UnmarshalJSON(data []byte) error {
-	uid := uuid.UUID{}
-	err := uid.UnmarshalText(data[1 : (len(data))-1])
-	if err != nil {
-		return err
-	}
-	(*id) = PatternID(uid)
-	return nil
-}
+type PatternID int64
 
 type Pattern struct {
 	ID          PatternID
@@ -62,7 +46,6 @@ func NewPattern(t PatternType, v string, d string) *Pattern {
 	now := time.Now()
 
 	return &Pattern{
-		ID:          PatternID(uuid.NewV4()),
 		Type:        t,
 		Value:       v,
 		Description: d,

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"log"
 
-	uuid "github.com/satori/go.uuid"
 	"github.com/smilga/analyzer/api"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -16,13 +15,13 @@ var (
 
 var users = []*api.User{
 	&api.User{
-		ID:       api.UserID(uuid.Must(uuid.FromString("3fba8a7b-274c-4613-a7a8-1cae01ce8a98"))),
+		ID:       1,
 		Name:     "Kaspars Smilga",
 		Email:    "smilga.kaspars@gmail.com",
 		Password: cryptPass("pass"),
 	},
 	&api.User{
-		ID:       api.UserID(uuid.Must(uuid.FromString("00311786-2151-4b9a-bb3a-45e7227886f6"))),
+		ID:       2,
 		Name:     "Admin",
 		Email:    "admin@inspected.tech",
 		Password: cryptPass("pass"),
