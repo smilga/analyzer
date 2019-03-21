@@ -79,7 +79,8 @@ export default {
     },
     asyncData({ app }) {
         return app.$axios.get('/api/patterns')
-            .then(res => ({ patterns: res.data.map(p => new Pattern(p)) }));
+            .then(res => ({ patterns: res.data.map(p => new Pattern(p)) }))
+            .catch(console.error);
     },
     methods: {
         remove() {

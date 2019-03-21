@@ -40,10 +40,10 @@ func (s *WebsiteStore) Save(w *api.Website) error {
 
 	res, err := s.DB.Exec(`
 		INSERT INTO websites
-		(id, user_id, url, searched_at, created_at, deleted_at)
+		(id, user_id, url, inspected_at, created_at, deleted_at)
 		VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE
 		user_id=VALUES(user_id), url=VALUES(url)
-	`, w.ID, w.UserID, w.URL, w.SearchedAt, w.CreatedAt, w.DeletedAt)
+	`, w.ID, w.UserID, w.URL, w.InspectedAt, w.CreatedAt, w.DeletedAt)
 
 	if err != nil {
 		return err

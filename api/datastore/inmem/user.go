@@ -1,16 +1,10 @@
 package inmem
 
 import (
-	"errors"
 	"log"
 
 	"github.com/smilga/analyzer/api"
 	"golang.org/x/crypto/bcrypt"
-)
-
-// Error definitions
-var (
-	ErrUserNotFound = errors.New("Error user not found")
 )
 
 var users = []*api.User{
@@ -41,13 +35,34 @@ type UserStore struct {
 	users []*api.User
 }
 
+func (s *UserStore) Save(target *api.User) error {
+	if target.ID == 0 {
+		var last int64
+		for _, n := range s.users {
+			if int64(n.ID) > last {
+				last = int64(n.ID)
+			}
+		}
+		target.ID = api.UserID(last + 1)
+	}
+
+	for i, user := range s.users {
+		if user.ID == target.ID {
+			s.users = append(s.users[:i], s.users[i+1:]...)
+		}
+	}
+	s.users = append(s.users, target)
+
+	return nil
+}
+
 func (s *UserStore) ByEmail(email string) (*api.User, error) {
 	for _, u := range s.users {
 		if u.Email == email {
 			return u, nil
 		}
 	}
-	return nil, ErrUserNotFound
+	return nil, api.ErrUserNotFound
 }
 
 func (s *UserStore) ByID(uid api.UserID) (*api.User, error) {
@@ -56,7 +71,7 @@ func (s *UserStore) ByID(uid api.UserID) (*api.User, error) {
 			return u, nil
 		}
 	}
-	return nil, ErrUserNotFound
+	return nil, api.ErrUserNotFound
 }
 
 func NewUserStore() *UserStore {

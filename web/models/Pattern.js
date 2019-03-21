@@ -1,7 +1,7 @@
 import Tag from '@/models/Tag';
 
 export const TYPE = {
-    JS_SOURCE: 'js_source',
+    // JS_SOURCE: 'js_source',
     HTML: 'html',
     RESOURCE: 'resource'
 };
@@ -19,7 +19,7 @@ export default class Pattern {
         this.type = Type;
         this.value = Value;
         this.description = Description;
-        this.tags = Tags.map(t => new Tag(t));
+        this.tags = !Tags ? [] : Tags.map(t => new Tag(t));
         this.createdAt = CreatedAt;
     }
 }

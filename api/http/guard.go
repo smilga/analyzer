@@ -34,6 +34,7 @@ func (g *Guard) Protect(h http.Handler) http.Handler {
 
 		id, err := g.authorize(r)
 		if err != nil {
+			fmt.Println(err)
 			w.Header().Set("Content-Type", "application/json")
 			res, err := json.Marshal(map[string]string{
 				"error": err.Error(),

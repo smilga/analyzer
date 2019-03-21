@@ -6,6 +6,7 @@ import (
 	netHTTP "net/http"
 	"os"
 
+	"github.com/smilga/analyzer/api/datastore/mysql"
 	"github.com/smilga/analyzer/api/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -19,7 +20,9 @@ func main() {
 		Allowed: []string{"/api/login", "api/logout", "/api/ws"},
 	})
 
-	h := http.NewTestHandler()
+	db := mysql.NewConnection()
+
+	h := http.NewHandler(db)
 
 	router.POST("/api/login", h.Login)
 	router.GET("/api/logout", h.Logout)

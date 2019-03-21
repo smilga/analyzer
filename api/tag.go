@@ -18,10 +18,10 @@ type TagStorage interface {
 }
 
 type Tag struct {
-	ID        TagID
-	Value     string
-	CreatedAt *time.Time
-	DeletedAt *time.Time
+	ID        TagID      `db:"id"`
+	Value     string     `db:"value"`
+	CreatedAt *time.Time `db:"created_at"`
+	DeletedAt *time.Time `db:"deleted_at"`
 }
 
 func NewTag(value string) *Tag {

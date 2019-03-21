@@ -25,7 +25,7 @@ type Website struct {
 	UserID          UserID     `db:"user_id"`
 	URL             string     `db:"url"`
 	MatchedPatterns []*Match   `db:"-"`
-	SearchedAt      *time.Time `db:"searched_at"`
+	InspectedAt     *time.Time `db:"inspected_at"`
 	CreatedAt       *time.Time `db:"created_at"`
 	DeletedAt       *time.Time `db:"deleted_at"`
 }
@@ -34,11 +34,11 @@ func NewWebsite(uri string, uid UserID) *Website {
 	now := time.Now()
 
 	return &Website{
-		UserID:     uid,
-		URL:        buildURL(uri),
-		SearchedAt: nil,
-		CreatedAt:  &now,
-		DeletedAt:  nil,
+		UserID:      uid,
+		URL:         buildURL(uri),
+		InspectedAt: nil,
+		CreatedAt:   &now,
+		DeletedAt:   nil,
 	}
 }
 

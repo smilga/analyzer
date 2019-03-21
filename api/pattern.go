@@ -28,13 +28,14 @@ type PatternType string
 type PatternID int64
 
 type Pattern struct {
-	ID          PatternID
-	Type        PatternType
-	Value       string
-	Description string
-	Tags        []*Tag `db:"-"`
-	CreatedAt   *time.Time
-	DeletedAt   *time.Time
+	ID          PatternID   `db:"id"`
+	Type        PatternType `db:"type"`
+	Value       string      `db:"value"`
+	Description string      `db:"description"`
+	Tags        []*Tag      `db:"-"`
+	CreatedAt   *time.Time  `db:"created_at"`
+	UpdatedAt   *time.Time  `db:"updated_at"`
+	DeletedAt   *time.Time  `db:"deleted_at"`
 }
 
 type MatchedPattern struct {

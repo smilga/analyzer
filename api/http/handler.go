@@ -4,8 +4,10 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/smilga/analyzer/api"
 	"github.com/smilga/analyzer/api/datastore/inmem"
+	"github.com/smilga/analyzer/api/datastore/mysql"
 )
 
 type Handler struct {
@@ -26,6 +28,21 @@ func (h *Handler) AuthID(r *http.Request) (api.UserID, error) {
 	}
 
 	return uid, nil
+}
+
+func NewHandler(db *sqlx.DB) *Handler {
+	return &Handler{
+		Auth:           NewJWTAuth(os.Getenv("JWT_SECRET")),
+		WebsiteStorage: mysql.NewWebsiteStore(db),
+		UserStorage:    mysql.NewUserStore(db),
+		PatternStorage: mysql.NewPatternStore(db),
+		TagStorage:     mysql.NewTagStore(db),
+		FilterStorage:  inmem.NewFilterStore(),
+		Analyzer: &api.Analyzer{
+			PatternStorage: inmem.NewPatternStore(),
+			WebsiteStorage: inmem.NewWebsiteStore(),
+		},
+	}
 }
 
 func NewTestHandler() *Handler {

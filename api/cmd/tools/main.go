@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/smilga/analyzer/api"
 	"github.com/smilga/analyzer/api/datastore/mysql"
 )
 
@@ -22,6 +24,8 @@ func main() {
 	switch *operation {
 	case "migrate":
 		migrate(db)
+	case "seed":
+		seed(db)
 	default:
 		fmt.Println("No command provided")
 	}
@@ -30,13 +34,22 @@ func main() {
 func migrate(db *sqlx.DB) {
 	sqls := readMigrations(migrationsDir)
 
-	fmt.Println(sqls)
 	for _, sql := range sqls {
+		fmt.Printf("Execute: \n\n %s \n\n", sql)
 		result, err := db.Exec(sql)
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println(result)
+		rows, _ := result.RowsAffected()
+		fmt.Println(rows)
+	}
+}
+
+func seed(db *sqlx.DB) {
+	userRepo := mysql.NewUserStore(db)
+	err := userRepo.Save(admin)
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 
@@ -57,4 +70,14 @@ func readMigrations(dir string) []string {
 	}
 
 	return migrations
+}
+
+var admin = &api.User{
+	Name:     "admin",
+	Email:    "admin@inspected.tech",
+	Password: api.Cryptstring("pass"),
+	CreatedAt: func() *time.Time {
+		now := time.Now()
+		return &now
+	}(),
 }

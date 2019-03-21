@@ -31,8 +31,8 @@
         width="200"
       />
       <el-table-column
-        prop="SearchedAt"
-        label="SearchedAt"
+        prop="InspectedAt"
+        label="InspectedAt"
         width="100"
       />
       <el-table-column
@@ -117,7 +117,7 @@ export default {
             website.Loading = true;
             this.$axios.get(`/api/inspect/websites/${website.ID}`)
                 .then((res) => {
-                    website.SearchedAt = res.data.SearchedAt;
+                    website.InspectedAt = res.data.InspectedAt;
                     website.Services = res.data.Services;
                     website.Loading = false;
                 })

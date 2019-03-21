@@ -13,23 +13,7 @@ var script = "puppeteer/index.js"
 type Analyzer struct {
 	PatternStorage PatternStorage
 	WebsiteStorage WebsiteStorage
-}
-
-type Match struct {
-	PatternID PatternID
-	Value     string
-}
-
-type ResponseTime struct {
-	Loaded        string
-	ResourceCheck string
-	HTMLCheck     string
-	Total         string
-}
-
-type Result struct {
-	Time    ResponseTime
-	Matches []*Match
+	ResultStorage  ResultStorage
 }
 
 // TODO proccess multiple websites at once!
@@ -70,11 +54,10 @@ func (a *Analyzer) Inspect(w *Website) error {
 	// TODO
 	// store website, user, duration, how many requests tested etc for debug
 	// USER REQUESTS TABLE for pricing, debug etc
-	fmt.Println(result.Time)
 
 	now := time.Now()
 	w.MatchedPatterns = result.Matches
-	w.SearchedAt = &now
+	w.InspectedAt = &now
 
 	err = a.WebsiteStorage.Save(w)
 	if err != nil {
