@@ -6,10 +6,10 @@ module.exports = class Response {
     toJSON() {
         return {
             matches: this.matches,
-            loadedIn: this.loaded,
-            resourceCheckIn: this.resourceCheck,
-            htmlCheckIn: this.htmlCheck,
-            totalIn: this.totalIn,
+            loadedIn: this.time.loaded,
+            resourceCheckIn: this.time.resourceCheck,
+            htmlCheckIn: this.time.htmlCheck,
+            totalIn: this.time.total,
         }
     }
 }

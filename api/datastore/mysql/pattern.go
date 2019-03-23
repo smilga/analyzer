@@ -30,17 +30,17 @@ func (s *PatternStore) Save(p *api.Pattern) error {
 		return err
 	}
 
-	id, err := res.LastInsertId()
-	if err != nil {
-		return err
-	}
-	p.ID = api.PatternID(id)
-
-	if len(p.Tags) > 0 {
-		err = s.storeTags(p.ID, p.Tags)
+	if p.ID == 0 {
+		id, err := res.LastInsertId()
 		if err != nil {
 			return err
 		}
+		p.ID = api.PatternID(id)
+	}
+
+	err = s.updatePatternTags(p.ID, p.Tags)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -125,7 +125,16 @@ func (s *PatternStore) Delete(id api.PatternID) error {
 	return err
 }
 
-func (s *PatternStore) storeTags(id api.PatternID, tags []*api.Tag) error {
+func (s *PatternStore) updatePatternTags(id api.PatternID, tags []*api.Tag) error {
+	_, err := s.DB.Exec(`DELETE FROM pattern_tags WHERE pattern_id = ?`, id)
+	if err != nil {
+		return err
+	}
+
+	if len(tags) == 0 {
+		return nil
+	}
+
 	var bindVars string
 	tagIDs := make([]interface{}, len(tags))
 	for i, t := range tags {
@@ -136,10 +145,6 @@ func (s *PatternStore) storeTags(id api.PatternID, tags []*api.Tag) error {
 		tagIDs[i] = t.ID
 	}
 
-	_, err := s.DB.Exec(`DELETE FROM pattern_tags WHERE pattern_id = ?`, id)
-	if err != nil {
-		return err
-	}
 	_, err = s.DB.Exec(`INSERT INTO pattern_tags (pattern_id, tag_id) VALUES `+bindVars, tagIDs...)
 	return err
 }

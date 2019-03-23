@@ -33,7 +33,7 @@
       <el-table-column
         prop="InspectedAt"
         label="InspectedAt"
-        width="100"
+        width="300"
       />
       <el-table-column
         cell-class-name="service-column"
@@ -53,11 +53,16 @@
       </el-table-column>
       <el-table-column
         prop=""
-        width="50"
+        width="70"
         label=""
       >
         <template slot-scope="scope">
-          <span class="inspect" @click="inspect(scope.row)">
+          <nuxt-link :to="`/websites/${scope.row.ID}/report`">
+            <span class="icon-btn">
+              <i class="el-icon-search" />
+            </span>
+          </nuxt-link>
+          <span class="icon-btn" @click="inspect(scope.row)">
             <i :class="[ scope.row.Loading === true ? 'loading' : '', 'el-icon-refresh' ]" />
           </span>
         </template>
@@ -117,9 +122,7 @@ export default {
             website.Loading = true;
             this.$axios.get(`/api/inspect/websites/${website.ID}`)
                 .then((res) => {
-                    website.InspectedAt = res.data.InspectedAt;
-                    website.Services = res.data.Services;
-                    website.Loading = false;
+                    this.websites.splice(this.websites.indexOf(website), 1, new Website(res.data));
                 })
                 .catch((e) => {
                     this.$notify.error({
@@ -149,8 +152,9 @@ export default {
 .el-upload-list {
     margin-left: 30px;
 }
-.inspect {
+.btn-icon {
     cursor: pointer;
+    margin-right: 4px;
 }
 
 .cell {

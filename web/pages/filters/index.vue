@@ -17,12 +17,21 @@
         label="Tags"
       >
         <template slot-scope="scope">
-          <el-select v-model="scope.row.tags" class="tags-list" multiple placeholder="Tags...">
+          <el-select
+            v-model="scope.row.tags"
+            class="tags-list"
+            multiple
+            filterable
+            default-first-option
+            placeholder="Select tags"
+            @remove-tag="update(scope.row, false)"
+            @visible-change="update(scope.row, arguments[0])"
+          >
             <el-option
               v-for="item in tags"
               :key="item.value"
-              :label="item.label"
-              :value="item.value"
+              :label="item.value"
+              :value="item"
             />
           </el-select>
         </template>
@@ -58,8 +67,8 @@ export default {
         };
     },
     mounted() {
-        this.$axios('/api/filters')
-            .then(res => this.filters = res.data.map(f => new Filter(f)));
+        this.$axios.get('/api/filters')
+            .then(res => this.filters = res.data.map(p => new Filter(p)));
 
         this.$axios('/api/tags')
             .then(res => this.tags = res.data.map(t => new Tag(t)));
@@ -78,6 +87,11 @@ export default {
                         position: 'bottom-right'
                     });
                 });
+        },
+        update(filter, open) {
+            if (!open) {
+                this.$axios.post(`/api/filters`, filter);
+            }
         }
     }
 };

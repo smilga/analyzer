@@ -1,8 +1,8 @@
 <template>
-    <div class="layout">
-        <toolbar></toolbar>
-        <nuxt class="content"/>
-    </div>
+  <div class="layout">
+    <toolbar />
+    <nuxt class="content" />
+  </div>
 </template>
 
 <script>
@@ -14,7 +14,7 @@ export default {
         sidebar,
         toolbar
     }
-}
+};
 </script>
 
 <style lang="scss">
@@ -28,10 +28,17 @@ body {
     font-family: 'Product Sans';
 }
 
-
 .divider {
     margin: 10px 0;
     border-bottom: 1px solid #dcdfe6;
+}
+
+.text-desc {
+    font-size: 14px;
+    color: #606269;
+}
+.text-right {
+    text-align: right;
 }
 
 .icon-btn {

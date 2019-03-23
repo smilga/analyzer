@@ -21,13 +21,13 @@ type WebsiteStorage interface {
 }
 
 type Website struct {
-	ID              WebsiteID  `db:"id"`
-	UserID          UserID     `db:"user_id"`
-	URL             string     `db:"url"`
-	MatchedPatterns []*Match   `db:"-"`
-	InspectedAt     *time.Time `db:"inspected_at"`
-	CreatedAt       *time.Time `db:"created_at"`
-	DeletedAt       *time.Time `db:"deleted_at"`
+	ID          WebsiteID  `db:"id"`
+	UserID      UserID     `db:"user_id"`
+	URL         string     `db:"url"`
+	Matches     []*Match   `db:"-"`
+	InspectedAt *time.Time `db:"inspected_at"`
+	CreatedAt   *time.Time `db:"created_at"`
+	DeletedAt   *time.Time `db:"deleted_at"`
 }
 
 func NewWebsite(uri string, uid UserID) *Website {

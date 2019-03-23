@@ -3,7 +3,6 @@ const  toJSON = (node) => {
 
     const obj = {
         nodeType: node.nodeType,
-        innerText: node.innerText
     };
 
     if (node.tagName) {

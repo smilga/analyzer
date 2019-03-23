@@ -45,11 +45,13 @@ func (s *TagStore) Save(t *api.Tag) error {
 		return err
 	}
 
-	id, err := res.LastInsertId()
-	if err != nil {
-		return err
+	if t.ID == 0 {
+		id, err := res.LastInsertId()
+		if err != nil {
+			return err
+		}
+		t.ID = api.TagID(id)
 	}
-	t.ID = api.TagID(id)
 
 	return nil
 }

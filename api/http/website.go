@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/smilga/analyzer/api"
@@ -83,4 +84,21 @@ func (h *Handler) ImportWebsites(w http.ResponseWriter, r *http.Request, _ httpr
 	}
 
 	h.responseJSON(w, websites)
+}
+
+func (h *Handler) Report(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	// TODO check if website belongs to user
+	id, err := strconv.Atoi(ps.ByName("id"))
+	if err != nil {
+		h.responseErr(w, err)
+		return
+	}
+	report, err := h.ReportStorage.ByWebsite(api.WebsiteID(id))
+	if err != nil {
+		h.responseErr(w, err)
+		return
+	}
+
+	h.responseJSON(w, report)
+
 }

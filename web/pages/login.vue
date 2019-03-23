@@ -1,12 +1,14 @@
 <template>
   <div class="login">
-    <h1>Login</h1>
+    <div class="logo">
+      <img src="~/assets/img/logo.svg" alt="">
+    </div>
     <el-form ref="form" :model="cred" label-width="120px">
-      <el-form-item label="Email">
-        <el-input v-model="cred.email" name="email" autocomplete="email" />
+      <el-form-item label-width="0">
+        <el-input v-model="cred.email" placeholder="john@example.com" name="email" autocomplete="email" />
       </el-form-item>
-      <el-form-item label="Password">
-        <el-input v-model="cred.password" type="password" name="password" show-password />
+      <el-form-item label-width="0">
+        <el-input v-model="cred.password" placeholder="********" type="password" name="password" show-password />
       </el-form-item>
       <div class="action">
         <el-button @click="login">
@@ -58,5 +60,13 @@ export default {
 .action {
     display: flex;
     justify-content: flex-end;
+}
+.logo {
+    height: 80px;
+    text-align: center;
+    margin: 50px 0;
+    img {
+        height: 100%;
+    }
 }
 </style>

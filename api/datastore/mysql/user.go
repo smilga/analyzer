@@ -31,11 +31,13 @@ func (s *UserStore) Save(u *api.User) error {
 		return err
 	}
 
-	id, err := res.LastInsertId()
-	if err != nil {
-		return err
+	if u.ID == 0 {
+		id, err := res.LastInsertId()
+		if err != nil {
+			return err
+		}
+		u.ID = api.UserID(id)
 	}
-	u.ID = api.UserID(id)
 
 	return nil
 }

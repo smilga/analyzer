@@ -42,6 +42,7 @@ func main() {
 	router.GET("/api/filters/:id", h.Filter)
 
 	router.GET("/api/websites", h.Websites)
+	router.GET("/api/websites/:id/report", h.Report)
 	router.POST("/api/websites", h.SaveWebsite)
 	router.POST("/api/websites/import", h.ImportWebsites)
 

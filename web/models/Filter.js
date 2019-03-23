@@ -1,3 +1,5 @@
+import Tag from '@/models/Tag';
+
 export default class Filter {
     constructor({
         ID = null,
@@ -7,7 +9,7 @@ export default class Filter {
     } = {}) {
         this.id = ID;
         this.name = Name;
-        this.Description = Description;
-        this.tags = Tags;
+        this.description = Description;
+        this.tags = Tags.map(t => new Tag(t));
     }
 }

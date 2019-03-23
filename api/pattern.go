@@ -38,11 +38,6 @@ type Pattern struct {
 	DeletedAt   *time.Time  `db:"deleted_at"`
 }
 
-type MatchedPattern struct {
-	*Pattern
-	Match string
-}
-
 func NewPattern(t PatternType, v string, d string) *Pattern {
 	now := time.Now()
 

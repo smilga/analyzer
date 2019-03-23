@@ -1,13 +1,7 @@
-<template>
-    <div>hello</div>
-</template>
-
 <script>
-
 export default {
-    middleware: 'authenticated',
-}
+    asyncData({ redirect }) {
+        return redirect('/websites');
+    }
+};
 </script>
-
-<style>
-</style>

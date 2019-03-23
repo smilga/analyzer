@@ -17,6 +17,7 @@ type Handler struct {
 	PatternStorage api.PatternStorage
 	TagStorage     api.TagStorage
 	FilterStorage  api.FilterStorage
+	ReportStorage  api.ReportStorage
 	Analyzer       *api.Analyzer
 }
 
@@ -31,16 +32,25 @@ func (h *Handler) AuthID(r *http.Request) (api.UserID, error) {
 }
 
 func NewHandler(db *sqlx.DB) *Handler {
+	ws := mysql.NewWebsiteStore(db)
+	ps := mysql.NewPatternStore(db)
+	us := mysql.NewUserStore(db)
+	ts := mysql.NewTagStore(db)
+	rs := mysql.NewReportStore(db)
+	fs := mysql.NewFilterStore(db)
+
 	return &Handler{
 		Auth:           NewJWTAuth(os.Getenv("JWT_SECRET")),
-		WebsiteStorage: mysql.NewWebsiteStore(db),
-		UserStorage:    mysql.NewUserStore(db),
-		PatternStorage: mysql.NewPatternStore(db),
-		TagStorage:     mysql.NewTagStore(db),
-		FilterStorage:  inmem.NewFilterStore(),
+		WebsiteStorage: ws,
+		UserStorage:    us,
+		PatternStorage: ps,
+		TagStorage:     ts,
+		FilterStorage:  fs,
+		ReportStorage:  rs,
 		Analyzer: &api.Analyzer{
-			PatternStorage: inmem.NewPatternStore(),
-			WebsiteStorage: inmem.NewWebsiteStore(),
+			PatternStorage: ps,
+			WebsiteStorage: ws,
+			ReportStorage:  rs,
 		},
 	}
 }
