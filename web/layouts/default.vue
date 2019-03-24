@@ -48,6 +48,7 @@ body {
     align-items: center;
     justify-content: center;
     transition: .3s;
+    cursor: pointer;
     &:hover {
         background: $themeColor;
     }

@@ -7,6 +7,9 @@
       <el-form-item label="Searched at">
         {{ report.CreatedAt }}
       </el-form-item>
+      <el-form-item label="Enviroment loaded in">
+        {{ report.StartedIn }}s
+      </el-form-item>
       <el-form-item label="Page loaded in">
         {{ report.LoadedIn }}s
       </el-form-item>

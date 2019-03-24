@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/smilga/analyzer/api"
@@ -17,10 +18,25 @@ func (h *Handler) Websites(w http.ResponseWriter, r *http.Request, _ httprouter.
 		return
 	}
 
-	websites, err := h.WebsiteStorage.ByUser(uid)
+	websites := []*api.Website{}
+
+	filterIDs, err := parseFilterString(r)
 	if err != nil {
 		h.responseErr(w, err)
 		return
+	}
+	if len(filterIDs) == 0 {
+		websites, err = h.WebsiteStorage.ByUser(uid)
+		if err != nil {
+			h.responseErr(w, err)
+			return
+		}
+	} else {
+		websites, err = h.WebsiteStorage.ByFilterID(filterIDs, api.UserID(uid))
+		if err != nil {
+			h.responseErr(w, err)
+			return
+		}
 	}
 
 	h.responseJSON(w, websites)
@@ -101,4 +117,24 @@ func (h *Handler) Report(w http.ResponseWriter, r *http.Request, ps httprouter.P
 
 	h.responseJSON(w, report)
 
+}
+
+func parseFilterString(r *http.Request) ([]api.FilterID, error) {
+	filterIDs := []api.FilterID{}
+	if filterStr, ok := r.URL.Query()["f"]; ok {
+		fStr := filterStr[0]
+		fs := strings.Split(fStr, ",")
+
+		for _, sid := range fs {
+			if len(sid) == 0 {
+				continue
+			}
+			id, err := strconv.Atoi(sid)
+			if err != nil {
+				return nil, err
+			}
+			filterIDs = append(filterIDs, api.FilterID(id))
+		}
+	}
+	return filterIDs, nil
 }

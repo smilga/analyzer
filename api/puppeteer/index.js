@@ -9,6 +9,7 @@ const tStart = new Date();
 
 // TODO to class to handle times
 const time = {
+    started: null,
     loaded: null,
     resourceCheck: null,
     htmlCheck: null,
@@ -44,13 +45,14 @@ const requestIntercept = req => {
 
     try {
         browser = await puppeteer.connect(connConfig);
+        time.started = ((new Date() - tStart) / 1000).toString();
         page = await browser.newPage();
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36');
         await page.setRequestInterception(true);
         page.on('request', requestIntercept);
         await page.goto(website, gotoConf);
 
-        time.loaded = ((new Date() - tStart) / 1000).toString();
+        time.loaded = (((new Date() - tStart) / 1000) - time.started).toString();
     } catch (e) {
         console.error(e)
         await browser.close();
@@ -58,7 +60,7 @@ const requestIntercept = req => {
 
     try {
         matches = analyzer.analyzeResources();
-        time.resourceCheck = (((new Date() - tStart) / 1000) - time.loaded).toFixed(3);
+        time.resourceCheck = (((new Date() - tStart) / 1000) - time.loaded - time.started).toFixed(3);
     } catch (e) {
         console.error(e)
         await browser.close();
@@ -66,7 +68,7 @@ const requestIntercept = req => {
 
     try {
         matches = matches.concat(await analyzer.analyzeHTML(page));
-        time.htmlCheck = (((new Date() - tStart) / 1000) - time.loaded - time.resourceCheck).toFixed(3);
+        time.htmlCheck = (((new Date() - tStart) / 1000) - time.loaded - time.resourceCheck - time.started).toFixed(3);
     } catch (e) {
         console.error(e);
         await browser.close();

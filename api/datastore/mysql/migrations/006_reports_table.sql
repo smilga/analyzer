@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS reports (
     id INT NOT NULL AUTO_INCREMENT,
     user_id INT NOT NULL,
     website_id INT NOT NULL,
+    started_in VARCHAR(10) NULL DEFAULT NULL,
     loaded_in VARCHAR(10) NULL DEFAULT NULL,
     resource_check_in VARCHAR(10) NULL DEFAULT NULL,
     html_check_in VARCHAR(10) NULL DEFAULT NULL,

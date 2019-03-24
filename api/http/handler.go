@@ -6,7 +6,6 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/smilga/analyzer/api"
-	"github.com/smilga/analyzer/api/datastore/inmem"
 	"github.com/smilga/analyzer/api/datastore/mysql"
 )
 
@@ -55,17 +54,17 @@ func NewHandler(db *sqlx.DB) *Handler {
 	}
 }
 
-func NewTestHandler() *Handler {
-	return &Handler{
-		Auth:           NewJWTAuth(os.Getenv("JWT_SECRET")),
-		WebsiteStorage: inmem.NewWebsiteStore(),
-		UserStorage:    inmem.NewUserStore(),
-		PatternStorage: inmem.NewPatternStore(),
-		TagStorage:     inmem.NewTagStore(),
-		FilterStorage:  inmem.NewFilterStore(),
-		Analyzer: &api.Analyzer{
-			PatternStorage: inmem.NewPatternStore(),
-			WebsiteStorage: inmem.NewWebsiteStore(),
-		},
-	}
-}
+// func NewTestHandler() *Handler {
+// 	return &Handler{
+// 		Auth:           NewJWTAuth(os.Getenv("JWT_SECRET")),
+// 		WebsiteStorage: inmem.NewWebsiteStore(),
+// 		UserStorage:    inmem.NewUserStore(),
+// 		PatternStorage: inmem.NewPatternStore(),
+// 		TagStorage:     inmem.NewTagStore(),
+// 		FilterStorage:  inmem.NewFilterStore(),
+// 		Analyzer: &api.Analyzer{
+// 			PatternStorage: inmem.NewPatternStore(),
+// 			WebsiteStorage: inmem.NewWebsiteStore(),
+// 		},
+// 	}
+// }

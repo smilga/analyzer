@@ -121,7 +121,12 @@ func (s *PatternStore) All() ([]*api.Pattern, error) {
 }
 
 func (s *PatternStore) Delete(id api.PatternID) error {
-	_, err := s.DB.Exec(`UPDATE patterns SET deleted_at=NOW() where id=?`, id)
+	t := []*api.Tag{}
+	err := s.updatePatternTags(id, t)
+	if err != nil {
+		return err
+	}
+	_, err = s.DB.Exec(`UPDATE patterns SET deleted_at=NOW() where id=?`, id)
 	return err
 }
 

@@ -15,6 +15,7 @@ type WebsiteID int64
 
 type WebsiteStorage interface {
 	ByUser(UserID) ([]*Website, error)
+	ByFilterID([]FilterID, UserID) ([]*Website, error)
 	Get(WebsiteID) (*Website, error)
 	Save(*Website) error
 	Delete(WebsiteID) error
@@ -24,6 +25,7 @@ type Website struct {
 	ID          WebsiteID  `db:"id"`
 	UserID      UserID     `db:"user_id"`
 	URL         string     `db:"url"`
+	Tags        []*Tag     `db:"-"`
 	Matches     []*Match   `db:"-"`
 	InspectedAt *time.Time `db:"inspected_at"`
 	CreatedAt   *time.Time `db:"created_at"`

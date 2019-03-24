@@ -16,6 +16,7 @@ type Report struct {
 	Matches         []*Match   `db:"-"`
 	WebsiteURL      string     `db:"-"`
 	LoadedIn        string     `db:"loaded_in"`
+	StartedIn       string     `db:"started_in"`
 	ResourceCheckIn string     `db:"resource_check_in"`
 	HTMLCheckIn     string     `db:"html_check_in"`
 	TotalIn         string     `db:"total_in"`

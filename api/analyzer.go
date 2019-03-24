@@ -33,9 +33,9 @@ func (a *Analyzer) Inspect(w *Website) error {
 		return err
 	}
 
-	fmt.Println("======== Pattern string ==========")
+	fmt.Println("======== INPUT ==========")
 	fmt.Println(string(s))
-	fmt.Println("======== Pattern string ==========")
+	fmt.Println("======== INPUT ==========")
 
 	var stdOut, stdErr bytes.Buffer
 	cmd := exec.Command("node", script, w.URL, string(s))
@@ -46,6 +46,9 @@ func (a *Analyzer) Inspect(w *Website) error {
 		return err
 	}
 
+	fmt.Println("======== OUTPU ==========")
+	fmt.Println(stdOut.String())
+	fmt.Println("======== OUTPU ==========")
 	var result = &Result{}
 	err = json.Unmarshal(stdOut.Bytes(), result)
 	if err != nil {
@@ -78,6 +81,7 @@ func (a *Analyzer) saveReport(res *Result, w *Website) (*Report, error) {
 	report := &Report{
 		UserID:          w.UserID,
 		WebsiteID:       w.ID,
+		StartedIn:       res.StartedIn,
 		LoadedIn:        res.LoadedIn,
 		ResourceCheckIn: res.ResourceCheckIn,
 		HTMLCheckIn:     res.HTMLCheckIn,

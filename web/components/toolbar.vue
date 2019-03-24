@@ -1,58 +1,58 @@
 <template>
-    <el-menu
-        :default-active="$route.name"
-        class="el-menu-top"
-        background-color="white"
-        text-color="#545c64"
-        active-text-color="#000000"
-        >
+  <el-menu
+    :default-active="$route.name"
+    class="el-menu-top"
+    background-color="white"
+    text-color="#545c64"
+    active-text-color="#000000"
+  >
+    <template v-if="user">
+      <nuxt-link to="/websites">
+        <el-menu-item index="websites">
+          <i class="el-icon-menu" />
+          <span>Websites</span>
+        </el-menu-item>
+      </nuxt-link>
+
+      <nuxt-link to="/patterns">
+        <el-menu-item index="patterns">
+          <i class="el-icon-search" />
+          <span>Patterns</span>
+        </el-menu-item>
+      </nuxt-link>
+
+      <nuxt-link to="/filters">
+        <el-menu-item index="filters">
+          <i class="el-icon-sort" />
+          <span>Filters</span>
+        </el-menu-item>
+      </nuxt-link>
+
+      <div class="right">
         <template v-if="user">
-            <nuxt-link to="/websites">
-                <el-menu-item index="websites">
-                    <i class="el-icon-menu" />
-                        <span>Websites</span>
-                </el-menu-item>
-            </nuxt-link>
-
-            <nuxt-link to="/patterns">
-                <el-menu-item index="patterns">
-                    <i class="el-icon-search" />
-                        <span>Patterns</span>
-                </el-menu-item>
-            </nuxt-link>
-
-            <nuxt-link to="/filters">
-                <el-menu-item index="filters">
-                    <i class="el-icon-sort"/>
-                        <span>Filters</span>
-                </el-menu-item>
-            </nuxt-link>
+          <el-dropdown class="user-dropdown">
+            <div class="el-dropdown-link">
+              {{ user.Email }}
+              <i class="el-icon-arrow-down el-icon--right" />
+            </div>
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item @click.native="logout">
+                Logout
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
         </template>
-
-        <div class="right">
-            <template v-if="user">
-                <el-dropdown class="user-dropdown">
-                    <div class="el-dropdown-link">
-                        {{ user.Email }}
-                        <i class="el-icon-arrow-down el-icon--right" />
-                    </div>
-                    <el-dropdown-menu slot="dropdown">
-                        <el-dropdown-item @click.native="logout">
-                            Logout
-                        </el-dropdown-item>
-                    </el-dropdown-menu>
-                </el-dropdown>
-            </template>
-            <template v-else>
-                <nuxt-link to="/login">
-                    <el-menu-item index="4">
-                        <i class="el-icon-setting" />
-                            <span>Login</span>
-                    </el-menu-item>
-                </nuxt-link>
-            </template>
-        </div>
-    </el-menu>
+        <template v-else>
+          <nuxt-link to="/login">
+            <el-menu-item index="4">
+              <i class="el-icon-setting" />
+              <span>Login</span>
+            </el-menu-item>
+          </nuxt-link>
+        </template>
+      </div>
+    </template>
+  </el-menu>
 </template>
 <script>
 import { mapState } from 'vuex';

@@ -22,7 +22,10 @@ module.exports = class Analyzer {
         let matches = [];
 
         patterns.forEach(p => {
-            matches = matches.concat(this.resourceURLMatch(p));
+            let match = this.resourceURLMatch(p)
+            if(match) {
+                matches.push(match);
+            }
         });
 
         return matches;
@@ -57,7 +60,10 @@ module.exports = class Analyzer {
     resourceURLMatch(pattern) {
         let matchedUrls = this.multiMatch(this.resourceURLs, pattern.value);
 
-        return new Match(pattern.id, matchedUrls.join(","));
+        if(matchedUrls.length > 0) {
+            return new Match(pattern.id, matchedUrls.join(","));
+        }
+        return null;
     }
 
     multiMatch(urls, pattern) {
