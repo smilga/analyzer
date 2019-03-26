@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/go-redis/redis"
 	"github.com/jmoiron/sqlx"
 	"github.com/smilga/analyzer/api"
 	"github.com/smilga/analyzer/api/datastore/mysql"
@@ -50,6 +51,9 @@ func NewHandler(db *sqlx.DB) *Handler {
 			PatternStorage: ps,
 			WebsiteStorage: ws,
 			ReportStorage:  rs,
+			Client: redis.NewClient(&redis.Options{
+				Addr: "redis:6379",
+			}),
 		},
 	}
 }

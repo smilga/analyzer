@@ -51,6 +51,12 @@ func seed(db *sqlx.DB) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	patternRepo := mysql.NewPatternStore(db)
+	err = patternRepo.Save(isAlive)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func readMigrations(dir string) []string {
@@ -76,6 +82,16 @@ var admin = &api.User{
 	Name:     "admin",
 	Email:    "admin@inspected.tech",
 	Password: api.Cryptstring("pass"),
+	CreatedAt: func() *time.Time {
+		now := time.Now()
+		return &now
+	}(),
+}
+
+var isAlive = &api.Pattern{
+	Type:        api.System,
+	Value:       "isAlive",
+	Description: "checks if website is alive",
 	CreatedAt: func() *time.Time {
 		now := time.Now()
 		return &now

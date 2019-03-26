@@ -22,8 +22,6 @@ func (h *Handler) InspectWebsite(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	// TODO run in goroutine and when ready post to socket channel
-	// Socket could be service on handler
 	err = h.Analyzer.Inspect(website)
 	if err != nil {
 		h.responseErr(w, err)
@@ -31,4 +29,28 @@ func (h *Handler) InspectWebsite(w http.ResponseWriter, r *http.Request, ps http
 	}
 
 	h.responseJSON(w, website)
+}
+
+func (h *Handler) InspectAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	uid, err := h.AuthID(r)
+	if err != nil {
+		h.responseErr(w, err)
+		return
+	}
+
+	websites, err := h.WebsiteStorage.ByUser(uid)
+	if err != nil {
+		h.responseErr(w, err)
+		return
+	}
+
+	for i := 0; i < len(websites); i++ {
+		err = h.Analyzer.Inspect(websites[i])
+		if err != nil {
+			h.responseErr(w, err)
+			return
+		}
+	}
+
+	h.responseJSON(w, "ok")
 }

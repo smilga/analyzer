@@ -18,8 +18,8 @@
           csv file with plain url list
         </div>
       </el-upload>
-      <el-button class="rescan" icon="el-icon-refresh">
-        Rescan all
+      <el-button class="rescan" icon="el-icon-refresh" @click="inspectAll">
+        Inspect all
       </el-button>
     </div>
     <div class="filter">
@@ -57,8 +57,8 @@
         />
         <el-table-column
           cell-class-name="service-column"
-          prop="Filters"
-          label="Filters"
+          prop="Tags"
+          label="Tags"
         >
           <template slot-scope="scope">
             <el-tag
@@ -138,6 +138,9 @@ export default {
             .then(res => this.filters = res.data.map(p => new Filter(p)));
     },
     methods: {
+        inspectAll() {
+            this.$axios.get('/api/inspect/websites').then(console.log);
+        },
         fetch() {
             this.$axios.get(`/api/websites?f=${this.selected.join(',')}`)
                 .then(res => this.websites = res.data.map(p => new Website(p)));

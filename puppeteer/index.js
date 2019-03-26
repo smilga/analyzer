@@ -32,10 +32,15 @@ const gotoConf = {
 };
 
 const requestIntercept = req => {
-    if (req.resourceType() === 'script' || req.resourceType() === 'xhr') {
+    if (req.resourceType() === 'image') {
         analyzer.resourceURLs.push(req.url());
+        req.abort();
+    } else if (req.resourceType() === 'script' || req.resourceType() === 'xhr') {
+        analyzer.resourceURLs.push(req.url());
+        req.continue();
+    } else {
+        req.continue();
     }
-    req.continue();
 }
 
 (async() => {
@@ -54,12 +59,22 @@ const requestIntercept = req => {
 
         time.loaded = (((new Date() - tStart) / 1000) - time.started).toString();
     } catch (e) {
-        console.error(e)
+        if(e.message.includes('net::ERR_NAME_NOT_RESOLVED')) {
+            console.log(JSON.stringify(new Results));
+            await browser.close();
+            return;
+        }
         await browser.close();
     }
 
     try {
-        matches = analyzer.analyzeResources();
+        matches = matches.concat(analyzer.analyzeSystem());
+    } catch (e) {
+        console.error(e);
+    }
+
+    try {
+        matches = matches.concat(analyzer.analyzeResources());
         time.resourceCheck = (((new Date() - tStart) / 1000) - time.loaded - time.started).toFixed(3);
     } catch (e) {
         console.error(e)
@@ -76,9 +91,7 @@ const requestIntercept = req => {
 
     time.total = ((new Date() - tStart) / 1000).toString();
 
-    const res = new Results({ time, matches });
-
-    console.log(JSON.stringify(res));
+    console.log(JSON.stringify(new Results({ time, matches })));
 
     await browser.close();
 })();

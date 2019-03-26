@@ -14,6 +14,7 @@ const (
 	JSSource PatternType = "js_source"
 	HTML     PatternType = "html"
 	Resource PatternType = "resource"
+	System   PatternType = "system"
 )
 
 type PatternStorage interface {

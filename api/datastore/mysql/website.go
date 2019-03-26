@@ -20,7 +20,7 @@ func (s *WebsiteStore) ByUser(id api.UserID) ([]*api.Website, error) {
 		return nil, err
 	}
 
-	err = s.addTags(ws)
+	err = s.AddTags(ws)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (s *WebsiteStore) ByFilterID(filterIDs []api.FilterID, id api.UserID) ([]*a
 		return nil, err
 	}
 
-	err = s.addTags(ws)
+	err = s.AddTags(ws)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func (s *WebsiteStore) Get(id api.WebsiteID) (*api.Website, error) {
 	}
 
 	ws := []*api.Website{w}
-	err = s.addTags(ws)
+	err = s.AddTags(ws)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +159,7 @@ func (s *WebsiteStore) storeMatches(id api.WebsiteID, matches []*api.Match) erro
 	return err
 }
 
-func (s *WebsiteStore) addTags(websites []*api.Website) error {
+func (s *WebsiteStore) AddTags(websites []*api.Website) error {
 	tags := make(map[api.WebsiteID][]*api.Tag, len(websites))
 	websiteIDs := make([]api.WebsiteID, len(websites))
 
@@ -168,9 +168,13 @@ func (s *WebsiteStore) addTags(websites []*api.Website) error {
 		websiteIDs[i] = w.ID
 	}
 
+	if len(websites) == 0 {
+		return nil
+	}
+
 	query, args, err := sqlx.In(`
 		SELECT w.id, t.* FROM websites w
-		LEFT JOIN matches m on m.website_id = w.id
+		INNER JOIN matches m on m.website_id = w.id
 		LEFT JOIN pattern_tags pt on pt.pattern_id = m.pattern_id
 		LEFT JOIN tags t on t.id = pt.tag_id WHERE w.id in (?)
 		AND m.deleted_at IS NULL;

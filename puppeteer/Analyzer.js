@@ -3,6 +3,7 @@ const toJSON = require('./utils').toJSON;
 const JS_SOURCE = 'js_source';
 const HTML = 'html';
 const RESOURCE = 'resource';
+const SYSTEM = 'system';
 
 class Match {
     constructor(id, value) {
@@ -29,6 +30,30 @@ module.exports = class Analyzer {
         });
 
         return matches;
+    }
+
+    analyzeSystem() {
+        const patterns = this.extractPatterns(SYSTEM);
+        let matches = [];
+
+
+        patterns.forEach(p => {
+            let match = this.systemMatch(p);
+            if (match) {
+                matches.push(new Match(p.id, match.value));
+            }
+        });
+
+        return matches;
+    }
+
+    systemMatch(pattern) {
+        switch(pattern.value) {
+            case 'isAlive':
+                return { value: "true" }
+            default:
+                throw new Error('Unhandled system pattern');
+        }
     }
 
     async analyzeHTML(page) {

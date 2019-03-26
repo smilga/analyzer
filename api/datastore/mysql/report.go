@@ -3,7 +3,6 @@ package mysql
 import (
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/jmoiron/sqlx"
 	"github.com/smilga/analyzer/api"
 )
@@ -44,9 +43,8 @@ func (s *ReportStore) ByWebsite(id api.WebsiteID) (*api.Report, error) {
 
 	rows, err := s.DB.Query(`
 		SELECT * FROM (SELECT r.*, w.url FROM reports r LEFT JOIN websites w on w.id = r.website_id where w.id = ? order by created_at desc limit 1) r
-		LEFT JOIN matches m ON m.report_id = r.id
+		INNER JOIN matches m ON m.report_id = r.id
 	`, id)
-
 	if err != nil {
 		return nil, err
 	}
@@ -65,8 +63,10 @@ func (s *ReportStore) ByWebsite(id api.WebsiteID) (*api.Report, error) {
 		r.Matches = append(r.Matches, m)
 		patternIDs = append(patternIDs, m.PatternID)
 	}
-	spew.Dump(r.Matches)
-	spew.Dump(patternIDs)
+
+	if len(patternIDs) == 0 {
+		return r, nil
+	}
 
 	query, args, err := sqlx.In("SELECT * FROM patterns WHERE id IN (?);", patternIDs)
 	if err != nil {

@@ -1,5 +1,36 @@
 version: '3'
 services:
+    redis:
+        image: redis
+
+    prometheus:
+        image: prom/prometheus:v2.8.0
+        volumes:
+            - ./prometheus.yml:/etc/prometheus/prometheus.yml
+        command:
+            - '--config.file=/etc/prometheus/prometheus.yml'
+        ports:
+            - '9090:9090'
+
+    grafana:
+        image: grafana/grafana:6.0.2
+        environment:
+            - GF_SECURITY_ADMIN_PASSWORD=${GF_PASS}
+        depends_on:
+            - prometheus
+        ports:
+            - "3000:3000"
+
+    inspector:
+        build:
+            context: ./puppeteer
+            dockerfile: Dockerfile-dev
+        volumes:
+            - ./puppeteer:/puppeteer
+        depends_on:
+            - redis
+        command: ["npm", "run", "start", "--prefix", "/puppeteer"]
+
     web:
         image: web-dev
         build:
@@ -24,17 +55,10 @@ services:
             - MYSQL_USER=${MYSQL_USER}
             - MYSQL_PASS=${MYSQL_PASS}
             - MYSQL_DATABASE=${MYSQL_DATABASE}
-        command: sh -c "npm rebuild > /dev/null --prefix pupetteer && refresh run"
+        depends_on:
+            - database
+        command: sh -c "npm rebuild > /dev/null --prefix puppeteer && refresh run"
 
-    browserless:
-        image: browserless/chrome
-        restart: always
-        environment:
-              - MAX_CONCURRENT_SESSIONS=5
-              - MAX_QUEUE_LENGTH=10
-              - PREBOOT_CHROME=true
-              - ENABLE_DEBUGGER=false
-              - CONNECTION_TIMEOUT=300000
     database:
         image: mysql:latest
         command: --default-authentication-plugin=mysql_native_password

@@ -6,3 +6,4 @@ web/.nuxt/
 web/tags
 api/tags
 tags
+puppeteer/node_modules

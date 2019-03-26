@@ -1,11 +1,12 @@
 package api
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"os/exec"
 	"time"
+
+	"github.com/davecgh/go-spew/spew"
+	"github.com/go-redis/redis"
 )
 
 var script = "puppeteer/index.js"
@@ -14,73 +15,56 @@ type Analyzer struct {
 	PatternStorage PatternStorage
 	WebsiteStorage WebsiteStorage
 	ReportStorage  ReportStorage
+	Client         *redis.Client
 }
 
-// TODO proccess multiple websites at once!
 func (a *Analyzer) Inspect(w *Website) error {
-	patterns, err := a.PatternStorage.All()
+	ws, err := json.Marshal(w)
 	if err != nil {
 		return err
 	}
 
-	patternMap := make(map[PatternID]*Pattern, len(patterns))
-	for _, p := range patterns {
-		patternMap[p.ID] = p
-	}
-
-	s, err := json.Marshal(patterns)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("======== INPUT ==========")
-	fmt.Println(string(s))
-	fmt.Println("======== INPUT ==========")
-
-	var stdOut, stdErr bytes.Buffer
-	cmd := exec.Command("node", script, w.URL, string(s))
-	cmd.Stdout = &stdOut
-	cmd.Stderr = &stdErr
-	err = cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("======== OUTPU ==========")
-	fmt.Println(stdOut.String())
-	fmt.Println("======== OUTPU ==========")
-	var result = &Result{}
-	err = json.Unmarshal(stdOut.Bytes(), result)
-	if err != nil {
-		return err
-	}
-
-	report, err := a.saveReport(result, w)
-	if err != nil {
-		return nil
-	}
-
-	for _, match := range result.Matches {
-		match.ReportID = report.ID
-		match.WebsiteID = w.ID
-	}
-	now := time.Now()
-	w.Matches = result.Matches
-	w.InspectedAt = &now
-
-	err = a.WebsiteStorage.Save(w)
-	if err != nil {
-		return err
+	icmd := a.Client.LPush("pending:websites", string(ws))
+	if icmd.Err() != nil {
+		return icmd.Err()
 	}
 
 	return nil
 }
 
-func (a *Analyzer) saveReport(res *Result, w *Website) (*Report, error) {
+func (a *Analyzer) StartReporting(cb func(*Website)) {
+	for {
+		ss, err := a.Client.BRPop(time.Duration(time.Second*5), "inspect:results").Result()
+		if err != redis.Nil {
+			spew.Dump(err)
+		}
+
+		if ss != nil {
+			var result = &Result{}
+			err = json.Unmarshal([]byte(ss[1]), result)
+			if err != nil {
+				fmt.Println("Error parsing results from redis: ", err.Error())
+			}
+
+			website, err := a.saveReport(result)
+			if err != nil {
+				fmt.Println("Error saving report: ", err.Error())
+			}
+			cb(website)
+		}
+	}
+}
+
+func (a *Analyzer) saveReport(res *Result) (*Website, error) {
+	website, err := a.WebsiteStorage.Get(res.WebsiteID)
+	if err != nil {
+		return nil, err
+	}
+
 	now := time.Now()
 	report := &Report{
-		UserID:          w.UserID,
-		WebsiteID:       w.ID,
+		UserID:          website.UserID,
+		WebsiteID:       website.ID,
 		StartedIn:       res.StartedIn,
 		LoadedIn:        res.LoadedIn,
 		ResourceCheckIn: res.ResourceCheckIn,
@@ -89,9 +73,27 @@ func (a *Analyzer) saveReport(res *Result, w *Website) (*Report, error) {
 		CreatedAt:       &now,
 	}
 
-	err := a.ReportStorage.Save(report)
+	err = a.ReportStorage.Save(report)
 	if err != nil {
 		return nil, err
 	}
-	return report, nil
+
+	for _, match := range res.Matches {
+		match.ReportID = report.ID
+		match.WebsiteID = website.ID
+	}
+	website.Matches = res.Matches
+	website.InspectedAt = &now
+
+	err = a.WebsiteStorage.Save(website)
+	if err != nil {
+		return nil, err
+	}
+
+	err = a.WebsiteStorage.AddTags([]*Website{website})
+	if err != nil {
+		return nil, err
+	}
+
+	return website, nil
 }

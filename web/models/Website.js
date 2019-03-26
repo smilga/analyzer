@@ -2,12 +2,12 @@ import dayjs from 'dayjs';
 import Tag from '@/models/Tag';
 
 export default class Website {
-    constructor({ ID = null, URL = '', InspectedAt = null, Tags = [] } = {}) {
-        this.ID = ID;
-        this.URL = URL;
+    constructor({ id = null, url = '', inspectedAt = null, tags = [] } = {}) {
+        this.ID = id;
+        this.URL = url;
         this.Loading = false;
-        this.Tags = Tags.map(t => new Tag(t));
-        this.InspectedAt = InspectedAt ? formatDate(InspectedAt) : null;
+        this.Tags = tags.map(t => new Tag(t));
+        this.InspectedAt = inspectedAt ? formatDate(inspectedAt) : null;
     }
 }
 

@@ -6,6 +6,7 @@ import (
 	netHTTP "net/http"
 	"os"
 
+	"github.com/smilga/analyzer/api"
 	"github.com/smilga/analyzer/api/datastore/mysql"
 	"github.com/smilga/analyzer/api/http"
 
@@ -23,6 +24,12 @@ func main() {
 	db := mysql.NewConnection()
 
 	h := http.NewHandler(db)
+	go func() {
+		h.Analyzer.StartReporting(func(w *api.Website) {
+			fmt.Println("website analyzed")
+			fmt.Println("callback", w)
+		})
+	}()
 
 	router.POST("/api/login", h.Login)
 	router.GET("/api/logout", h.Logout)
@@ -47,6 +54,7 @@ func main() {
 	router.POST("/api/websites/import", h.ImportWebsites)
 
 	router.GET("/api/inspect/websites/:id", h.InspectWebsite)
+	router.GET("/api/inspect/websites/", h.InspectAll)
 
 	port := os.Getenv("API_PORT")
 	fmt.Println("Server started on port " + port)
