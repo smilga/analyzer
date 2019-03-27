@@ -7,6 +7,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/jmoiron/sqlx"
 	"github.com/smilga/analyzer/api"
+	"github.com/smilga/analyzer/api/datastore/cache"
 	"github.com/smilga/analyzer/api/datastore/mysql"
 	"github.com/smilga/analyzer/api/ws"
 )
@@ -40,17 +41,18 @@ func NewHandler(db *sqlx.DB) *Handler {
 	ts := mysql.NewTagStore(db)
 	rs := mysql.NewReportStore(db)
 	fs := mysql.NewFilterStore(db)
+	pcache := cache.NewPatternCache(ps)
 
 	return &Handler{
 		Auth:           NewJWTAuth(os.Getenv("JWT_SECRET")),
 		WebsiteStorage: wstore,
 		UserStorage:    us,
-		PatternStorage: ps,
+		PatternStorage: pcache,
 		TagStorage:     ts,
 		FilterStorage:  fs,
 		ReportStorage:  rs,
 		Analyzer: &api.Analyzer{
-			PatternStorage: ps,
+			PatternStorage: pcache,
 			WebsiteStorage: wstore,
 			ReportStorage:  rs,
 			Client: redis.NewClient(&redis.Options{

@@ -12,8 +12,6 @@ const gotoConf = {
     waitUntil: 'networkidle2',
 };
 
-const patterns = '[{"id":2,"type":"html","value":"#__nuxt","description":"Nuxt tag","tags":[{"id":3,"value":"JS Framework","createdAt":"2019-03-24T17:45:16Z","deletedAt":null},{"id":4,"value":"Nuxtjs","CreatedAt":"2019-03-24T20:02:12Z","DeletedAt":null}],"CreatedAt":"2019-03-24T17:45:16Z","UpdatedAt":"2019-03-24T20:02:12Z","DeletedAt":null},{"id":3,"type":"system","value":"isAlive","Description":"checks if website is alive","Tags":[{"id":5,"value":"isAlive","CreatedAt":"2019-03-26T15:54:44Z","DeletedAt":null}],"CreatedAt":"2019-03-26T15:44:20Z","UpdatedAt":"2019-03-26T15:54:44Z","DeletedAt":null},{"id":1,"type":"resource","value":"*mt.js*","Description":"Maxtraffic tracking","Tags":[{"ID":1,"Value":"Maxtraffic","CreatedAt":"2019-03-24T17:44:53Z","DeletedAt":null},{"id":2,"value":"Markting tools","CreatedAt":"2019-03-24T17:44:53Z","DeletedAt":null}],"CreatedAt":"2019-03-24T17:44:53Z","UpdatedAt":null,"DeletedAt":null}]';
-
 let cluster = {};
 
 (async () => {
@@ -32,7 +30,7 @@ let cluster = {};
     });
 
     await cluster.task(async ({ page, data: website }) => {
-        const analyzer = new Analyzer(JSON.parse(patterns));
+        const analyzer = new Analyzer(getPatterns());
 
         const requestIntercept = req => {
             if (req.resourceType() === 'image') {
@@ -107,4 +105,12 @@ const startRedisPuller = cluster => {
         });
     };
     brpop();
+}
+
+const getPatterns = () => {
+    let patterns = [];
+    client2.hgetall('inspect:patterns', function(err, obj){
+        patterns = Object.values(obj).map(v => JSON.parse(v));
+    });
+    return patterns;
 }

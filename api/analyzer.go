@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/go-redis/redis"
 )
 
@@ -33,8 +32,10 @@ func (a *Analyzer) Inspect(w *Website) error {
 func (a *Analyzer) StartReporting(cb func(*Website)) {
 	for {
 		ss, err := a.Client.BRPop(time.Duration(time.Second*5), "inspect:results").Result()
-		if err != redis.Nil {
-			spew.Dump(err)
+		if err != nil {
+			if err != redis.Nil {
+				fmt.Println("Error reading redis list: ", err)
+			}
 			continue
 		}
 
@@ -57,8 +58,6 @@ func (a *Analyzer) StartReporting(cb func(*Website)) {
 }
 
 func (a *Analyzer) saveReport(res *Result) (*Website, error) {
-	fmt.Println("save report func result: ")
-	spew.Dump(res)
 	website, err := a.WebsiteStorage.Get(res.WebsiteID)
 	if err != nil {
 		return nil, err
