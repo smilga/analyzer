@@ -1,5 +1,13 @@
 FROM node:10-slim
 
+WORKDIR /puppeteer
+
+COPY . .
+
+RUN npm install
+
+WORKDIR /
+
 # See https://crbug.com/795759
 RUN apt-get update && apt-get install -yq libgconf-2-4
 
@@ -36,11 +44,5 @@ RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser \
 
 # Run everything after as non-privileged user.
 USER pptruser
-
-WORKDIR /puppeteer
-
-COPY . .
-
-RUN npm install
 
 #ENTRYPOINT ["dumb-init", "--"]
