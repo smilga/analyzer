@@ -25,7 +25,7 @@ services:
         build: https://${GITHUB_ACCESS_TOKEN}:@github.com/smilga/analyzer.git#master:puppeteer
         depends_on:
             - redis
-        command: ["npm", "run", "start"]
+        command: ["npm", "run", "start", "--prefix", "/puppeteer"]
 
     web:
         build: https://${GITHUB_ACCESS_TOKEN}:@github.com/smilga/analyzer.git#master:web
