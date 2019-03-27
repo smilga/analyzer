@@ -9,6 +9,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/smilga/analyzer/api"
+	"github.com/smilga/analyzer/api/datastore/cache"
 	"github.com/smilga/analyzer/api/datastore/mysql"
 )
 
@@ -52,7 +53,7 @@ func seed(db *sqlx.DB) {
 		log.Fatal(err)
 	}
 
-	patternRepo := mysql.NewPatternStore(db)
+	patternRepo := cache.NewPatternCache(mysql.NewPatternStore(db))
 	err = patternRepo.Save(isAlive)
 	if err != nil {
 		log.Fatal(err)
