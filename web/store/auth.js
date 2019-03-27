@@ -7,9 +7,9 @@ export const state = () => ({
 
 export const actions = {
     me({ commit }) {
-        return this.$axios.get('/api/me').then(res => {
+        return this.$axios.get('/api/me').then((res) => {
             commit('setUser', res.data);
-        })
+        });
     }
 };
 
@@ -20,4 +20,4 @@ export const mutations = {
     setUser(state, user) {
         state.user = user;
     }
-}
+};

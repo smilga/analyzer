@@ -28,7 +28,7 @@ type Website struct {
 	URL         string     `json:"url" db:"url"`
 	Tags        []*Tag     `json:"tags" db:"-"`
 	Matches     []*Match   `json:"matches" db:"-"`
-	InspectedAt *time.Time `json:"inspectedAt "db:"inspected_at"`
+	InspectedAt *time.Time `json:"inspectedAt" db:"inspected_at"`
 	CreatedAt   *time.Time `json:"createdAt" db:"created_at"`
 	DeletedAt   *time.Time `json:"deletedAt" db:"deleted_at"`
 }

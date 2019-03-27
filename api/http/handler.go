@@ -8,6 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/smilga/analyzer/api"
 	"github.com/smilga/analyzer/api/datastore/mysql"
+	"github.com/smilga/analyzer/api/ws"
 )
 
 type Handler struct {
@@ -19,6 +20,7 @@ type Handler struct {
 	FilterStorage  api.FilterStorage
 	ReportStorage  api.ReportStorage
 	Analyzer       *api.Analyzer
+	Messanger      *ws.Messanger
 }
 
 func (h *Handler) AuthID(r *http.Request) (api.UserID, error) {
@@ -32,7 +34,7 @@ func (h *Handler) AuthID(r *http.Request) (api.UserID, error) {
 }
 
 func NewHandler(db *sqlx.DB) *Handler {
-	ws := mysql.NewWebsiteStore(db)
+	wstore := mysql.NewWebsiteStore(db)
 	ps := mysql.NewPatternStore(db)
 	us := mysql.NewUserStore(db)
 	ts := mysql.NewTagStore(db)
@@ -41,7 +43,7 @@ func NewHandler(db *sqlx.DB) *Handler {
 
 	return &Handler{
 		Auth:           NewJWTAuth(os.Getenv("JWT_SECRET")),
-		WebsiteStorage: ws,
+		WebsiteStorage: wstore,
 		UserStorage:    us,
 		PatternStorage: ps,
 		TagStorage:     ts,
@@ -49,12 +51,13 @@ func NewHandler(db *sqlx.DB) *Handler {
 		ReportStorage:  rs,
 		Analyzer: &api.Analyzer{
 			PatternStorage: ps,
-			WebsiteStorage: ws,
+			WebsiteStorage: wstore,
 			ReportStorage:  rs,
 			Client: redis.NewClient(&redis.Options{
 				Addr: "redis:6379",
 			}),
 		},
+		Messanger: ws.NewMessanger(),
 	}
 }
 

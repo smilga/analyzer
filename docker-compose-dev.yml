@@ -57,6 +57,8 @@ services:
             - MYSQL_DATABASE=${MYSQL_DATABASE}
         depends_on:
             - database
+        ports:
+            - "3033:3033"
         command: sh -c "npm rebuild > /dev/null --prefix puppeteer && refresh run"
 
     database:

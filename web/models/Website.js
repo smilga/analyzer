@@ -3,11 +3,11 @@ import Tag from '@/models/Tag';
 
 export default class Website {
     constructor({ id = null, url = '', inspectedAt = null, tags = [] } = {}) {
-        this.ID = id;
-        this.URL = url;
-        this.Loading = false;
-        this.Tags = tags.map(t => new Tag(t));
-        this.InspectedAt = inspectedAt ? formatDate(inspectedAt) : null;
+        this.id = id;
+        this.url = url;
+        this.loading = false;
+        this.tags = tags.map(t => new Tag(t));
+        this.inspectedAt = inspectedAt ? formatDate(inspectedAt) : null;
     }
 }
 

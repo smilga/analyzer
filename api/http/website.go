@@ -55,7 +55,6 @@ func (h *Handler) SaveWebsite(w http.ResponseWriter, r *http.Request, _ httprout
 		h.responseErr(w, err)
 		return
 	}
-
 	website.UserID = uid
 
 	err = h.WebsiteStorage.Save(website)
@@ -68,6 +67,12 @@ func (h *Handler) SaveWebsite(w http.ResponseWriter, r *http.Request, _ httprout
 }
 
 func (h *Handler) ImportWebsites(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	uid, err := h.AuthID(r)
+	if err != nil {
+		h.responseErr(w, err)
+		return
+	}
+
 	file, _, err := r.FormFile("file")
 	defer file.Close()
 
@@ -91,6 +96,7 @@ func (h *Handler) ImportWebsites(w http.ResponseWriter, r *http.Request, _ httpr
 			continue
 		}
 		website := &api.Website{URL: r[0]}
+		website.UserID = uid
 		err := h.WebsiteStorage.Save(website)
 		if err != nil {
 			h.responseErr(w, err)

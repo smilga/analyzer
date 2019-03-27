@@ -4,15 +4,6 @@ WORKDIR /analyzer-api
 
 COPY . .
 
-RUN apk update && apk upgrade && \
-        apk add nodejs-current && \
-        apk add nodejs-npm && \
-        apk add --no-cache git
-
-WORKDIR /analyzer-api/puppeteer
-
-RUN npm install
-
-WORKDIR /analyzer-api
+RUN apk update && apk upgrade && apk add --no-cache git
 
 RUN CGO_ENABLED=0 go install -v ./...

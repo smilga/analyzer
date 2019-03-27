@@ -45,7 +45,13 @@ export default {
             this.cred = { email: '', password: '' };
             this.$store.commit('auth/setToken', token);
             await this.$store.dispatch('auth/me');
+            this.connectWSockets();
             this.$router.push({ name: 'websites' });
+        },
+        connectWSockets() {
+            if (this.$store.state.auth.user) {
+                new WSocket({ store: this.$store, notify: this.$notify });
+            }
         }
     }
 };

@@ -46,24 +46,24 @@
         style="width: 100%"
       >
         <el-table-column
-          prop="URL"
+          prop="url"
           label="URL"
           width="200"
         />
         <el-table-column
-          prop="InspectedAt"
+          prop="inspectedAt"
           label="InspectedAt"
           width="300"
         />
         <el-table-column
           cell-class-name="service-column"
-          prop="Tags"
+          prop="tags"
           label="Tags"
         >
           <template slot-scope="scope">
             <el-tag
-              v-for="t in scope.row.Tags"
-              :key="scope.row.ID + t.id"
+              v-for="t in scope.row.tags"
+              :key="scope.row.id + t.id"
               size="mini"
               height="25"
               class="tag-preview"
@@ -79,13 +79,13 @@
           label=""
         >
           <template slot-scope="scope">
-            <nuxt-link :to="`/websites/${scope.row.ID}/report`">
+            <nuxt-link :to="`/websites/${scope.row.id}/report`">
               <span class="icon-btn">
                 <i class="el-icon-search" />
               </span>
             </nuxt-link>
-            <span class="icon-btn" @click="inspect(scope.row)">
-              <i :class="[ scope.row.Loading === true ? 'loading' : '', 'el-icon-refresh' ]" />
+            <span loading="true" class="icon-btn" @click="inspect(scope.row)">
+              <i :class="[ scope.row.loading === true ? 'loading' : '', 'el-icon-refresh' ]" />
             </span>
           </template>
         </el-table-column>
@@ -110,6 +110,7 @@
 <script>
 import Website from '@/models/Website';
 import Filter from '@/models/Filter';
+import { mapState } from 'vuex';
 
 export default {
     middleware: 'authenticated',
@@ -117,7 +118,6 @@ export default {
         return {
             filters: [],
             selected: [],
-            websites: [],
             dialog: {
                 addWebsite: false
             },
@@ -129,43 +129,44 @@ export default {
             this.fetch();
         }
     },
-    asyncData({ app }) {
-        return app.$axios.get('/api/websites')
-            .then(res => ({ websites: res.data.map(w => new Website(w)) }));
+    computed: {
+        ...mapState({
+            websites: state => state.websites.list
+        })
     },
     mounted() {
+        this.fetch();
         this.$axios.get('/api/filters')
             .then(res => this.filters = res.data.map(p => new Filter(p)));
     },
     methods: {
         inspectAll() {
+            this.websites.forEach((w) => {
+                this.$store.commit('websites/SET_LOADING', { id: w.id, status: true });
+            });
             this.$axios.get('/api/inspect/websites').then(console.log);
         },
         fetch() {
-            this.$axios.get(`/api/websites?f=${this.selected.join(',')}`)
-                .then(res => this.websites = res.data.map(p => new Website(p)));
+            this.$store.dispatch('websites/fetch', this.selected.join(','));
         },
         successImport(websites) {
-            this.websites = this.websites.concat(
-                websites.map(w => new Website({ URL: w.URL }))
-            );
+            const ws = websites.map(w => new Website({ url: w.url }));
+            this.$store.commit('websites/ADD', ws);
         },
         addWebsite() {
-            const w = new Website({ URL: this.websiteURL });
+            const w = new Website({ url: this.websiteURL });
             this.$axios.post('/api/websites', w)
                 .then((res) => {
-                    w.ID = res.data.ID;
-                    this.websites.push(w);
+                    w.id = res.data.id;
+                    this.$store.commit('websites/ADD', [w]);
                     this.websiteURL = '';
                     this.dialog.addWebsite = false;
                 });
         },
         inspect(website) {
-            website.Loading = true;
-            this.$axios.get(`/api/inspect/websites/${website.ID}`)
-                .then((res) => {
-                    this.websites.splice(this.websites.indexOf(website), 1, new Website(res.data));
-                })
+            this.$store.commit('websites/SET_LOADING', { id: website.id, status: true });
+            this.$axios.get(`/api/inspect/websites/${website.id}`)
+                // .then(res => this.$store.commit('websites/UPDATE', new Website(res.data)))
                 .catch((e) => {
                     this.$notify.error({
                         title: 'Error',

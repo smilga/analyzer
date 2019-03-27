@@ -9,6 +9,7 @@ import (
 	"github.com/smilga/analyzer/api"
 	"github.com/smilga/analyzer/api/datastore/mysql"
 	"github.com/smilga/analyzer/api/http"
+	"github.com/smilga/analyzer/api/ws"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -26,8 +27,19 @@ func main() {
 	h := http.NewHandler(db)
 	go func() {
 		h.Analyzer.StartReporting(func(w *api.Website) {
-			fmt.Println("website analyzed")
-			fmt.Println("callback", w)
+			if conn, ok := h.Messanger.Conns[w.UserID]; ok {
+				err := h.Messanger.Send(conn, &ws.Msg{
+					Type:   ws.CommMsg,
+					UserID: w.UserID,
+					Message: map[string]interface{}{
+						"action":  "update:website",
+						"website": w,
+					},
+				})
+				if err != nil {
+					fmt.Println("Error sending update website message: ", err)
+				}
+			}
 		})
 	}()
 
@@ -55,6 +67,8 @@ func main() {
 
 	router.GET("/api/inspect/websites/:id", h.InspectWebsite)
 	router.GET("/api/inspect/websites/", h.InspectAll)
+
+	router.GET("/api/ws", h.Upgrade)
 
 	port := os.Getenv("API_PORT")
 	fmt.Println("Server started on port " + port)

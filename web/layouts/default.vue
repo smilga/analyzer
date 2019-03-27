@@ -8,11 +8,18 @@
 <script>
 import sidebar from '@/components/sidebar.vue';
 import toolbar from '@/components/toolbar.vue';
+import WSocket from '@/models/WSocket';
+import mapState from 'vuex';
 
 export default {
     components: {
         sidebar,
         toolbar
+    },
+    mounted() {
+        if (this.$store.state.auth.user) {
+            new WSocket({ store: this.$store, notify: this.$notify });
+        }
     }
 };
 </script>
