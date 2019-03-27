@@ -70,6 +70,11 @@ func main() {
 
 	router.GET("/api/ws", h.Upgrade)
 
+	router.PanicHandler = func(w netHTTP.ResponseWriter, r *netHTTP.Request, err interface{}) {
+		fmt.Printf("Error: %v, URL: %v %v \n", err, r.Method, r.URL)
+		w.WriteHeader(netHTTP.StatusInternalServerError)
+	}
+
 	port := os.Getenv("API_PORT")
 	fmt.Println("Server started on port " + port)
 	log.Fatal(netHTTP.ListenAndServe(":"+port, g.Protect(router)))

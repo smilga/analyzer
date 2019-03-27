@@ -9,8 +9,6 @@ import (
 	"github.com/go-redis/redis"
 )
 
-var script = "puppeteer/index.js"
-
 type Analyzer struct {
 	PatternStorage PatternStorage
 	WebsiteStorage WebsiteStorage
@@ -37,6 +35,7 @@ func (a *Analyzer) StartReporting(cb func(*Website)) {
 		ss, err := a.Client.BRPop(time.Duration(time.Second*5), "inspect:results").Result()
 		if err != redis.Nil {
 			spew.Dump(err)
+			continue
 		}
 
 		if ss != nil {
@@ -44,11 +43,13 @@ func (a *Analyzer) StartReporting(cb func(*Website)) {
 			err = json.Unmarshal([]byte(ss[1]), result)
 			if err != nil {
 				fmt.Println("Error parsing results from redis: ", err.Error())
+				continue
 			}
 
 			website, err := a.saveReport(result)
 			if err != nil {
 				fmt.Println("Error saving report: ", err.Error())
+				continue
 			}
 			cb(website)
 		}
@@ -56,6 +57,8 @@ func (a *Analyzer) StartReporting(cb func(*Website)) {
 }
 
 func (a *Analyzer) saveReport(res *Result) (*Website, error) {
+	fmt.Println("save report func result: ")
+	spew.Dump(res)
 	website, err := a.WebsiteStorage.Get(res.WebsiteID)
 	if err != nil {
 		return nil, err
