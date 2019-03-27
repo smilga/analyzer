@@ -38,6 +38,11 @@ services:
         environment:
             - API_PORT=${API_PORT}
             - JWT_SECRET=${JWT_SECRET}
+            - MYSQL_USER=${MYSQL_USER}
+            - MYSQL_PASS=${MYSQL_PASS}
+            - MYSQL_DATABASE=${MYSQL_DATABASE}
+        ports:
+            - "3033:3033"
         command: ["server"]
 
     database:
@@ -56,7 +61,7 @@ services:
         volumes:
             - ./mysite.template:/etc/nginx/conf.d/mysite.template
         ports:
-            - "8080:8080"
+            - "80:80"
         environment:
             - NGINX_HOST=${NGINX_HOST}
             - WEB_PORT=${WEB_PORT}

@@ -20,6 +20,8 @@
 </template>
 
 <script>
+import WSocket from '@/models/WSocket';
+
 export default {
     data() {
         return {
@@ -34,6 +36,7 @@ export default {
             this.$axios.post('/api/login', this.cred)
                 .then(res => this.auth(res.data))
                 .catch((e) => {
+                    console.warn(e);
                     this.$notify.error({
                         title: 'Error',
                         message: e.response.data.error,
