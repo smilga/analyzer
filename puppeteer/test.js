@@ -30,7 +30,11 @@ let cluster = {};
     });
 
     await cluster.task(async ({ page, data: website }) => {
-        const analyzer = new Analyzer(getPatterns());
+        const patterns = await getPatterns();
+        console.log("===============================")
+        console.log(patterns)
+        console.log("===============================")
+        const analyzer = new Analyzer(patterns);
 
         const requestIntercept = req => {
             if (req.resourceType() === 'image') {
@@ -108,11 +112,14 @@ const startRedisPuller = cluster => {
 }
 
 const getPatterns = () => {
-    let patterns = [];
-    client2.hgetall('inspect:patterns', function(err, obj){
-        patterns = Object.values(obj).map(v => JSON.parse(v));
-        patterns = patterns.map(p => new Pattern(p))
-        console.log(patterns)
-    });
-    return patterns;
+    return new Promise((res, rej) => {
+        client2.hgetall('inspect:patterns', function(err, obj){
+            if(err) {
+                rej(err);
+            }
+            patterns = Object.values(obj).map(v => JSON.parse(v));
+            patterns = patterns.map(p => new Pattern(p))
+            res(patterns)
+        });
+    })
 }
