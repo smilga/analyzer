@@ -111,6 +111,8 @@ const getPatterns = () => {
     let patterns = [];
     client2.hgetall('inspect:patterns', function(err, obj){
         patterns = Object.values(obj).map(v => JSON.parse(v));
+        patterns = patterns.map(p => new Pattern(p))
+        console.log(patterns)
     });
     return patterns;
 }
