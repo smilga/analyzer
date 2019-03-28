@@ -2,6 +2,9 @@ version: '3'
 services:
     redis:
         image: redis
+        command: redis-server --appendonly yes
+        volumes:
+            - redis-data:/data
 
     # prometheus:
     #     image: prom/prometheus:v2.8.0

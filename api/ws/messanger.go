@@ -13,6 +13,8 @@ var (
 	ErrNilConns = errors.New("Error conns map is nil")
 )
 
+// TODO handle closed socket connections remove them from map
+
 type MsgType string
 
 const (
@@ -96,11 +98,14 @@ func (m *Messanger) SendToUser(id api.UserID, msg *Msg) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("Send to user socket")
 
 	if conns, ok := m.Conns[id]; ok {
+		fmt.Println("Found conns by user id")
 		for _, conn := range conns {
 			if err := conn.WriteMessage(websocket.TextMessage, ms); err != nil {
-				return err
+				fmt.Println("write socket message error: ", err)
+				continue
 			}
 		}
 	} else {
