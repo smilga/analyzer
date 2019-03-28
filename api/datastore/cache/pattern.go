@@ -37,7 +37,16 @@ func (c *PatternCache) Save(p *api.Pattern) error {
 }
 
 func (c *PatternCache) Delete(id api.PatternID) error {
-	return c.store.Delete(id)
+	err := c.store.Delete(id)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.client.HDel(redisKey, strconv.Itoa(int(id))).Result()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *PatternCache) Get(id api.PatternID) (*api.Pattern, error) {

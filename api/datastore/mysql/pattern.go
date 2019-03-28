@@ -24,7 +24,7 @@ func (s *PatternStore) Save(p *api.Pattern) error {
 		INSERT INTO patterns
 		(id, type, value, description, created_at, updated_at, deleted_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE
-		type=VALUES(type), description=VAlUES(description), updated_at=VALUES(updated_at)
+		type=VALUES(type), value=VALUES(value), description=VAlUES(description), updated_at=VALUES(updated_at)
 	`, p.ID, p.Type, p.Value, p.Description, p.CreatedAt, p.UpdatedAt, p.DeletedAt)
 	if err != nil {
 		return err
