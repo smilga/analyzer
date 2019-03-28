@@ -58,18 +58,26 @@ module.exports = class Analyzer {
 
     async analyzeHTML(page) {
         const patterns = this.extractPatterns(HTML);
+        console.log('+++++++')
+        console.log(patterns)
         let matches = await this.htmlMatch(page, patterns);
+        console.log('------------')
+        console.log(matches)
 
         return matches.map(m => new Match(m.id, JSON.stringify(m.el)));
     }
 
     async htmlMatch(page, patterns) {
+        page.on('console', consoleObj => console.log(consoleObj.text()));
+
         return await page.evaluate((toJSONFn, pat) => {
             const toJSON = new Function(' return (' + toJSONFn + ').apply(null, arguments)');
             const matches = [];
 
             pat.forEach(p => {
+                console.log('matching ', p.value)
                 let node = document.querySelector(p.value)
+                console.log(node)
                 if(node) {
                     matches.push({
                         el: toJSON.call(null, node),

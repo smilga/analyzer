@@ -1,26 +1,56 @@
 <template>
   <div class="websites">
     <div class="actions">
-      <el-button icon="el-icon-circle-plus" @click="dialog.addWebsite = true">
-        Add Website
-      </el-button>
-      <el-upload
-        class="import"
-        action="/api/websites/import"
-        accept=".csv"
-        :headers="{ Authorization: `Bearer ${$store.state.auth.token}` }"
-        :on-success="successImport"
-      >
-        <el-button icon="el-icon-circle-plus">
-          Import Websites
+      <span>
+        <el-button icon="el-icon-circle-plus" @click="dialog.addWebsite = true">
+          Add Website
         </el-button>
-        <div slot="tip" class="el-upload__tip">
-          csv file with plain url list
-        </div>
-      </el-upload>
-      <el-button class="rescan" icon="el-icon-refresh" @click="inspectAll">
-        Inspect all
-      </el-button>
+        <el-upload
+          class="import"
+          action="/api/websites/import"
+          accept=".csv"
+          :headers="{ Authorization: `Bearer ${$store.state.auth.token}` }"
+          :on-success="successImport"
+        >
+          <el-button icon="el-icon-circle-plus">
+            Import Websites
+          </el-button>
+          <div slot="tip" class="el-upload__tip">
+            csv file with plain url list
+          </div>
+        </el-upload>
+      </span>
+      <span>
+        <el-button
+          type="danger"
+          style="margin-right: 4px;"
+          :disabled="selectedWebsites.length === 0"
+          icon="el-icon-delete"
+          @click="deleteTarget = selectedWebsites.slice()"
+        >
+          <template v-if="selectedWebsites.length === 0">
+            Select to delete
+          </template>
+          <template v-else>
+            Delete {{ selectedWebsites.length }}
+          </template>
+        </el-button>
+
+        <el-button
+          :disabled="selectedWebsites.length === 0"
+          type="primary"
+          class="rescan"
+          icon="el-icon-refresh"
+          @click="inspectSelected"
+        >
+          <template v-if="selectedWebsites.length === 0">
+            Select to inspect
+          </template>
+          <template v-else>
+            Inspect {{ selectedWebsites.length }}
+          </template>
+        </el-button>
+      </span>
     </div>
     <div class="filter">
       <el-select
@@ -44,16 +74,30 @@
         class="website-table"
         :data="websites"
         style="width: 100%"
+        @selection-change="selectedWebsites = arguments[0]"
       >
+        <el-table-column
+          type="selection"
+          width="35"
+        />
+        <el-table-column
+          width="25"
+        >
+          <template slot-scope="scope">
+            <span>
+              <i v-if="scope.row.loading" class="el-icon-loading" />
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column
           prop="url"
           label="URL"
-          width="200"
+          width="250"
         />
         <el-table-column
           prop="inspectedAt"
           label="InspectedAt"
-          width="300"
+          width="150"
         />
         <el-table-column
           cell-class-name="service-column"
@@ -75,7 +119,7 @@
         </el-table-column>
         <el-table-column
           prop=""
-          width="70"
+          width="40"
           label=""
         >
           <template slot-scope="scope">
@@ -84,12 +128,21 @@
                 <i class="el-icon-search" />
               </span>
             </nuxt-link>
-            <span loading="true" class="icon-btn" @click="inspect(scope.row)">
-              <i :class="[ scope.row.loading === true ? 'loading' : '', 'el-icon-refresh' ]" />
-            </span>
           </template>
         </el-table-column>
       </el-table>
+
+      <el-dialog
+        title="Delete confirmation"
+        :visible="deleteTarget !== null"
+        width="30%"
+      >
+        <span>Are you sure want to delete?</span>
+        <span slot="footer" class="dialog-footer">
+          <el-button @click="deleteTarget = null">Cancel</el-button>
+          <el-button type="error" @click="deleteSelected">Confirm</el-button>
+        </span>
+      </el-dialog>
 
       <el-dialog
         title="Add Website"
@@ -116,12 +169,14 @@ export default {
     middleware: 'authenticated',
     data() {
         return {
+            selectedWebsites: [],
             filters: [],
             selected: [],
             dialog: {
                 addWebsite: false
             },
-            websiteURL: ''
+            websiteURL: '',
+            deleteTarget: null
         };
     },
     watch: {
@@ -140,17 +195,27 @@ export default {
             .then(res => this.filters = res.data.map(p => new Filter(p)));
     },
     methods: {
-        inspectAll() {
-            this.websites.forEach((w) => {
+        deleteSelected() {
+            const ids = this.selectedWebsites.map(w => w.id);
+            this.$store.dispatch('websites/delete', ids)
+                .then(() => {
+                    this.deleteTarget = null;
+                    this.selectedWebsites = [];
+                });
+        },
+        inspectSelected() {
+            this.selectedWebsites.forEach((w) => {
                 this.$store.commit('websites/SET_LOADING', { id: w.id, status: true });
             });
-            this.$axios.get('/api/inspect/websites').then(console.log);
+            const ids = this.selectedWebsites.map(w => w.id);
+            this.$axios.post('/api/inspect/websites', ids).then(() => {
+            });
         },
         fetch() {
             this.$store.dispatch('websites/fetch', this.selected.join(','));
         },
         successImport(websites) {
-            const ws = websites.map(w => new Website({ url: w.url }));
+            const ws = websites.map(w => new Website(w));
             this.$store.commit('websites/ADD', ws);
         },
         addWebsite() {
@@ -217,6 +282,10 @@ export default {
 }
 .tag-preview {
     margin: 0 2px;
+}
+.actions {
+    display: flex;
+    justify-content: space-between;
 }
 @-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
 @-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }

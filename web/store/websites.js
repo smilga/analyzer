@@ -16,6 +16,10 @@ export const actions = {
         }
         return this.$axios.get('/api/websites' + q)
             .then(res => ctx.commit('SET', res.data.map(w => new Website(w))));
+    },
+    delete(ctx, ids) {
+        return this.$axios.post('/api/websites/delete', ids)
+            .then(res => ctx.commit('REMOVE', ids));
     }
 };
 
@@ -37,5 +41,13 @@ export const mutations = {
         if (target) {
             Object.assign(target, website);
         }
+    },
+    REMOVE(state, ids) {
+        ids.forEach((id) => {
+            const target = state.list.find(i => i.id === id);
+            if (target) {
+                state.list.splice(state.list.indexOf(target), 1);
+            }
+        });
     }
 };

@@ -108,6 +108,25 @@ func (h *Handler) ImportWebsites(w http.ResponseWriter, r *http.Request, _ httpr
 	h.responseJSON(w, websites)
 }
 
+func (h *Handler) DeleteWebsites(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	ids := []api.WebsiteID{}
+	err := json.NewDecoder(r.Body).Decode(&ids)
+	if err != nil {
+		h.responseErr(w, err)
+		return
+	}
+
+	for _, id := range ids {
+		err = h.WebsiteStorage.Delete(id)
+		if err != nil {
+			h.responseErr(w, err)
+			return
+		}
+	}
+
+	h.responseJSON(w, "ok")
+}
+
 func (h *Handler) Report(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// TODO check if website belongs to user
 	id, err := strconv.Atoi(ps.ByName("id"))

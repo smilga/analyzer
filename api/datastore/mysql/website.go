@@ -131,6 +131,8 @@ func (s *WebsiteStore) Save(w *api.Website) error {
 }
 
 func (s *WebsiteStore) Delete(id api.WebsiteID) error {
+	// TODO validate id website belongs to user
+	// pass context down with user id and then check
 	_, err := s.DB.Exec(`UPDATE websites SET deleted_at=NOW() where id=?`, id)
 	return err
 }
@@ -173,11 +175,7 @@ func (s *WebsiteStore) AddTags(websites []*api.Website) error {
 	}
 
 	query, args, err := sqlx.In(`
-		SELECT w.id, t.* FROM websites w
-		INNER JOIN matches m on m.website_id = w.id
-		INNER JOIN pattern_tags pt on pt.pattern_id = m.pattern_id
-		INNER JOIN tags t on t.id = pt.tag_id WHERE w.id in (?)
-		AND m.deleted_at IS NULL;
+		SELECT w.id, t.* FROM websites w INNER JOIN matches m on m.website_id = w.id INNER JOIN pattern_tags pt on pt.pattern_id = m.pattern_id INNER JOIN tags t on t.id = pt.tag_id WHERE w.id in (?) AND m.deleted_at IS NULL;
 	`, websiteIDs)
 	if err != nil {
 		return err

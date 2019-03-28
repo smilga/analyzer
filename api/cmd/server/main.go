@@ -27,18 +27,16 @@ func main() {
 	h := http.NewHandler(db)
 	go func() {
 		h.Analyzer.StartReporting(func(w *api.Website) {
-			if conn, ok := h.Messanger.Conns[w.UserID]; ok {
-				err := h.Messanger.Send(conn, &ws.Msg{
-					Type:   ws.CommMsg,
-					UserID: w.UserID,
-					Message: map[string]interface{}{
-						"action":  "update:website",
-						"website": w,
-					},
-				})
-				if err != nil {
-					fmt.Println("Error sending update website message: ", err)
-				}
+			err := h.Messanger.SendToUser(w.UserID, &ws.Msg{
+				Type:   ws.CommMsg,
+				UserID: w.UserID,
+				Message: map[string]interface{}{
+					"action":  "update:website",
+					"website": w,
+				},
+			})
+			if err != nil {
+				fmt.Println("Error sending update website message: ", err)
 			}
 		})
 	}()
@@ -62,11 +60,12 @@ func main() {
 
 	router.GET("/api/websites", h.Websites)
 	router.GET("/api/websites/:id/report", h.Report)
+	router.POST("/api/websites/delete", h.DeleteWebsites)
 	router.POST("/api/websites", h.SaveWebsite)
 	router.POST("/api/websites/import", h.ImportWebsites)
 
 	router.GET("/api/inspect/websites/:id", h.InspectWebsite)
-	router.GET("/api/inspect/websites/", h.InspectAll)
+	router.POST("/api/inspect/websites/", h.Inspect)
 
 	router.GET("/api/ws", h.Upgrade)
 

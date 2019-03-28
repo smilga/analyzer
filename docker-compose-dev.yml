@@ -40,6 +40,7 @@ services:
             - ./web:/analyzer-web
         environment:
             - API_PORT=${API_PORT}
+            - WEB_DOMAIN=${WEB_DOMAIN}
         command: sh -c "npm rebuild > /dev/null && API_PORT=${API_PORT} npm run dev"
 
     api:

@@ -6,7 +6,7 @@ export default class Website {
         this.id = id;
         this.url = url;
         this.loading = false;
-        this.tags = tags.map(t => new Tag(t));
+        this.tags = tags ? tags.map(t => new Tag(t)) : [];
         this.inspectedAt = inspectedAt ? formatDate(inspectedAt) : null;
     }
 }

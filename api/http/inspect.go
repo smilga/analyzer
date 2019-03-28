@@ -1,6 +1,7 @@
 package http
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -31,11 +32,23 @@ func (h *Handler) InspectWebsite(w http.ResponseWriter, r *http.Request, ps http
 	h.responseJSON(w, website)
 }
 
-func (h *Handler) InspectAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (h *Handler) Inspect(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := h.AuthID(r)
 	if err != nil {
 		h.responseErr(w, err)
 		return
+	}
+
+	// TODO refacture this dont request all websites
+	ids := []api.WebsiteID{}
+	err = json.NewDecoder(r.Body).Decode(&ids)
+	if err != nil {
+		h.responseErr(w, err)
+		return
+	}
+	idMap := make(map[api.WebsiteID]bool, len(ids))
+	for _, id := range ids {
+		idMap[id] = true
 	}
 
 	websites, err := h.WebsiteStorage.ByUser(uid)
@@ -44,11 +57,13 @@ func (h *Handler) InspectAll(w http.ResponseWriter, r *http.Request, ps httprout
 		return
 	}
 
-	for i := 0; i < len(websites); i++ {
-		err = h.Analyzer.Inspect(websites[i])
-		if err != nil {
-			h.responseErr(w, err)
-			return
+	for _, website := range websites {
+		if _, ok := idMap[website.ID]; ok {
+			err = h.Analyzer.Inspect(website)
+			if err != nil {
+				h.responseErr(w, err)
+				return
+			}
 		}
 	}
 

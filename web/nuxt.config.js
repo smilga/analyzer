@@ -1,6 +1,9 @@
 const pkg = require('./package');
 
 module.exports = {
+    env: {
+        WEB_DOMAIN: process.env.WEB_DOMAIN
+    },
     mode: 'universal',
 
     /*
