@@ -33,7 +33,7 @@ class PingMsg extends Msg {
 }
 
 export default class WSocket {
-    constructor({ url = `ws://${process.env.WEB_DOMAIN}:3033/api/ws`, store = {}, notify = {} } = {}) {
+    constructor({ url = `ws://${process.env.WEB_DOMAIN || 'inspected.tech'}:3033/api/ws`, store = {}, notify = {} } = {}) {
         this.client = new WebSocket(url);
         this.client.onopen = this.init.bind(this);
         this.client.onmessage = this.onmessage.bind(this);
