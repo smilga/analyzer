@@ -38,6 +38,7 @@ func (m *Messanger) ReadMessage(conn *websocket.Conn) error {
 	if err != nil {
 		return err
 	}
+	fmt.Printf("message tyype %d ", msgType)
 
 	switch msgType {
 	case websocket.TextMessage:
@@ -71,12 +72,26 @@ func (m *Messanger) handleTextMsg(msg []byte, conn *websocket.Conn) error {
 	return nil
 }
 
+func (m *Messanger) removeConnn(conn *websocket.Conn, id api.UserID) error {
+	for i, c := range m.Conns[id] {
+		if c == conn {
+			m.Conns[id] = append(m.Conns[id][:i], m.Conns[id][i+1:]...)
+		}
+	}
+	return nil
+}
+
 func (m *Messanger) addConn(conn *websocket.Conn, id api.UserID) error {
 	if m.Conns == nil {
 		return ErrNilConns
 	}
 
+	conn.SetCloseHandler(func(code int, text string) error {
+		return m.removeConnn(conn, id)
+	})
+
 	m.Conns[id] = append(m.Conns[id], conn)
+
 	return nil
 }
 
@@ -98,10 +113,8 @@ func (m *Messanger) SendToUser(id api.UserID, msg *Msg) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("Send to user socket")
 
 	if conns, ok := m.Conns[id]; ok {
-		fmt.Println("Found conns by user id")
 		for _, conn := range conns {
 			if err := conn.WriteMessage(websocket.TextMessage, ms); err != nil {
 				fmt.Println("write socket message error: ", err)
@@ -128,6 +141,7 @@ func (m *Messanger) Broadcast(msg *Msg) error {
 }
 
 func (m *Messanger) handleCloseMsg(msg string, conn *websocket.Conn) error {
+	fmt.Println("close message recieved", msg, conn)
 	return nil
 }
 
