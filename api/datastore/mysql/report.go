@@ -41,10 +41,20 @@ func (s *ReportStore) Save(r *api.Report) error {
 func (s *ReportStore) ByWebsite(id api.WebsiteID) (*api.Report, error) {
 	r := &api.Report{}
 
+	err := s.DB.QueryRow(`
+		SELECT r.*, w.url FROM reports r
+		LEFT JOIN websites w on w.id = r.website_id
+		WHERE r.website_id = ?
+		ORDER BY created_at DESC limit 1
+	`, id).Scan(&r.ID, &r.UserID, &r.WebsiteID, &r.StartedIn, &r.LoadedIn, &r.ResourceCheckIn, &r.HTMLCheckIn, &r.TotalIn, &r.CreatedAt,
+		&r.WebsiteURL)
+	if err != nil {
+		return nil, err
+	}
+
 	rows, err := s.DB.Query(`
-		SELECT * FROM (SELECT r.*, w.url FROM reports r LEFT JOIN websites w on w.id = r.website_id where w.id = ? order by created_at desc limit 1) r
-		INNER JOIN matches m ON m.report_id = r.id
-	`, id)
+		SELECT * FROM matches where report_id = ?
+	`, r.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -52,11 +62,7 @@ func (s *ReportStore) ByWebsite(id api.WebsiteID) (*api.Report, error) {
 	patternIDs := []api.PatternID{}
 	for rows.Next() {
 		m := &api.Match{}
-		err := rows.Scan(&r.ID, &r.UserID, &r.WebsiteID, &r.StartedIn, &r.LoadedIn, &r.ResourceCheckIn, &r.HTMLCheckIn, &r.TotalIn, &r.CreatedAt,
-			&r.WebsiteURL,
-			&m.ID, &m.PatternID, &m.WebsiteID, &m.ReportID, &m.Value, &m.CreatedAt, &m.DeletedAt,
-		)
-
+		err := rows.Scan(&m.ID, &m.PatternID, &m.WebsiteID, &m.ReportID, &m.Value, &m.CreatedAt, &m.DeletedAt)
 		if err != nil {
 			return nil, err
 		}

@@ -58,11 +58,7 @@ module.exports = class Analyzer {
 
     async analyzeHTML(page) {
         const patterns = this.extractPatterns(HTML);
-        console.log('+++++++')
-        console.log(patterns)
         let matches = await this.htmlMatch(page, patterns);
-        console.log('------------')
-        console.log(matches)
 
         return matches.map(m => new Match(m.id, JSON.stringify(m.el)));
     }
@@ -75,9 +71,7 @@ module.exports = class Analyzer {
             const matches = [];
 
             pat.forEach(p => {
-                console.log('matching ', p.value)
                 let node = document.querySelector(p.value)
-                console.log(node)
                 if(node) {
                     matches.push({
                         el: toJSON.call(null, node),
@@ -94,7 +88,7 @@ module.exports = class Analyzer {
         let matchedUrls = this.multiMatch(this.resourceURLs, pattern.value);
 
         if(matchedUrls.length > 0) {
-            return new Match(pattern.id, matchedUrls.join(","));
+            return new Match(pattern.id, matchedUrls[0]);
         }
         return null;
     }

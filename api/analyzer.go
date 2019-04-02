@@ -31,7 +31,7 @@ func (a *Analyzer) Inspect(w *Website) error {
 
 func (a *Analyzer) StartReporting(cb func(*Website)) {
 	for {
-		ss, err := a.Client.BRPop(time.Duration(time.Second*5), "inspect:results").Result()
+		ss, err := a.Client.BRPop(time.Second*5, "inspect:results").Result()
 		if err != nil {
 			if err != redis.Nil {
 				fmt.Println("Error reading redis list: ", err)

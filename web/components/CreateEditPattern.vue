@@ -65,6 +65,7 @@ export default {
         };
     },
     mounted() {
+
         this.$axios.get('/api/tags/')
             .then(res => this.tags = res.data.map(t => new Tag(t)));
     },
