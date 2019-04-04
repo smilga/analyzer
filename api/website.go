@@ -14,8 +14,8 @@ var (
 type WebsiteID int64
 
 type WebsiteStorage interface {
-	ByUser(UserID) ([]*Website, error)
-	ByFilterID([]FilterID, UserID) ([]*Website, error)
+	ByUser(UserID, *Pagination) ([]*Website, int, error)
+	ByFilterID([]FilterID, UserID, *Pagination) ([]*Website, int, error)
 	Get(WebsiteID) (*Website, error)
 	Save(*Website) error
 	Delete(WebsiteID) error
@@ -31,6 +31,42 @@ type Website struct {
 	InspectedAt *time.Time `json:"inspectedAt" db:"inspected_at"`
 	CreatedAt   *time.Time `json:"createdAt" db:"created_at"`
 	DeletedAt   *time.Time `json:"deletedAt" db:"deleted_at"`
+}
+
+type Pagination struct {
+	limit int
+	page  int
+}
+
+func (p *Pagination) Offset() int {
+	return (p.Page() - 1) * p.limit
+}
+
+func (p *Pagination) Limit() int {
+	if p.limit == 0 {
+		return 2147483647
+	}
+	return p.limit
+}
+
+func (p *Pagination) Page() int {
+	if p.page == 0 {
+		return 1
+	}
+	return p.page
+}
+
+func NewPagination(limit int, page int) *Pagination {
+	if limit == 0 {
+		limit = 10
+	}
+	if page == 0 {
+		page = 1
+	}
+	return &Pagination{
+		limit,
+		page,
+	}
 }
 
 func NewWebsite(uri string, uid UserID) *Website {

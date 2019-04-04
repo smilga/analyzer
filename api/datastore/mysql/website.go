@@ -12,72 +12,107 @@ type WebsiteStore struct {
 	DB *sqlx.DB
 }
 
-func (s *WebsiteStore) ByUser(id api.UserID) ([]*api.Website, error) {
+func (s *WebsiteStore) ByUser(id api.UserID, p *api.Pagination) ([]*api.Website, int, error) {
 	ws := []*api.Website{}
+	var total int
 
-	err := s.DB.Select(&ws, "SELECT * FROM websites WHERE user_id=? AND deleted_at IS NULL", id)
+	err := s.DB.Select(&ws, `
+		SELECT * FROM websites
+		WHERE user_id=? AND deleted_at IS NULL
+		ORDER BY websites.created_at DESC
+		LIMIT ?
+		OFFSET ?
+		`, id, p.Limit(), p.Offset())
 	if err != nil {
-		return nil, err
+		return nil, total, err
+	}
+
+	err = s.DB.Get(&total, `
+		SELECT count(*) FROM websites
+		WHERE user_id=? AND deleted_at IS NULL
+		ORDER BY websites.created_at DESC`, id)
+	if err != nil {
+		return nil, total, err
 	}
 
 	err = s.AddTags(ws)
 	if err != nil {
-		return nil, err
+		return nil, total, err
 	}
 
-	return ws, nil
+	return ws, total, nil
 }
 
-func (s *WebsiteStore) ByFilterID(filterIDs []api.FilterID, id api.UserID) ([]*api.Website, error) {
+func (s *WebsiteStore) ByFilterID(filterIDs []api.FilterID, id api.UserID, p *api.Pagination) ([]*api.Website, int, error) {
 	ws := []*api.Website{}
+	var total int
 
 	if len(filterIDs) == 0 {
-		return ws, nil
+		return ws, total, nil
 	}
 
 	tagIDs := []api.TagID{}
 	query, args, err := sqlx.In("SELECT tag_id FROM filter_tags WHERE filter_id IN (?);", filterIDs)
 	if err != nil {
-		return nil, err
+		return nil, total, err
 	}
 	err = s.DB.Select(&tagIDs, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, total, err
 	}
 
 	patternIDs := []api.PatternID{}
 	query, args, err = sqlx.In("SELECT pattern_id FROM pattern_tags WHERE tag_id IN (?);", tagIDs)
 	if err != nil {
-		return nil, err
+		return nil, total, err
 	}
 	err = s.DB.Select(&patternIDs, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, total, err
 	}
 
 	query, args, err = sqlx.In(`
-		SELECT w.* from matches m
+		SELECT SQL_CALC_FOUND_ROWS  w.* from matches m
 		LEFT JOIN websites w
 		ON m.website_id = w.id
 		WHERE m.pattern_id IN (?)
 		AND m.deleted_at IS NULL
 		GROUP BY w.id
-		HAVING w.user_id = ?;
-	`, patternIDs, id)
+		HAVING w.user_id = ?
+		ORDER BY w.created_at DESC
+		LIMIT ?
+		OFFSET ?
+	`, patternIDs, id, p.Limit(), p.Offset())
 	if err != nil {
-		return nil, err
+		return nil, total, err
 	}
-	err = s.DB.Select(&ws, query, args...)
+
+	rows, err := s.DB.Query(query, args...)
 	if err != nil {
-		return nil, err
+		return nil, total, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		w := &api.Website{}
+		err := rows.Scan(&w.ID, &w.UserID, &w.URL, &w.InspectedAt, &w.CreatedAt, &w.DeletedAt)
+		if err != nil {
+			return nil, total, err
+		}
+		ws = append(ws, w)
+	}
+
+	err = s.DB.Get(&total, "SELECT FOUND_ROWS()")
+	if err != nil {
+		return nil, total, err
 	}
 
 	err = s.AddTags(ws)
 	if err != nil {
-		return nil, err
+		return nil, total, err
 	}
 
-	return ws, nil
+	return ws, total, nil
 }
 
 func (s *WebsiteStore) Get(id api.WebsiteID) (*api.Website, error) {
@@ -185,6 +220,7 @@ func (s *WebsiteStore) AddTags(websites []*api.Website) error {
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var wID api.WebsiteID

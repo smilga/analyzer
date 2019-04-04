@@ -1,7 +1,8 @@
 import Website from '@/models/Website';
 
 export const state = () => ({
-    list: []
+    list: [],
+    total: 0
 });
 
 export const getters = {
@@ -9,13 +10,13 @@ export const getters = {
 };
 
 export const actions = {
-    fetch(ctx, filters = null) {
-        let q = '';
-        if (filters) {
-            q = '?f=' + filters;
-        }
+    fetch(ctx, { filters = null, pagination }) {
+        const q = `?f=${filters}&p=${pagination.page}&l=${pagination.limit}`;
         return this.$axios.get('/api/websites' + q)
-            .then(res => ctx.commit('SET', res.data.map(w => new Website(w))));
+            .then((res) => {
+                ctx.commit('SET', res.data.websites.map(w => new Website(w)));
+                ctx.commit('TOTAL', res.data.total);
+            });
     },
     delete(ctx, ids) {
         return this.$axios.post('/api/websites/delete', ids)
@@ -49,5 +50,8 @@ export const mutations = {
                 state.list.splice(state.list.indexOf(target), 1);
             }
         });
+    },
+    TOTAL(state, total) {
+        state.total = total;
     }
 };

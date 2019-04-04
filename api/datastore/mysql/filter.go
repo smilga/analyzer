@@ -24,6 +24,7 @@ func (s *FilterStore) Get(id api.FilterID) (*api.Filter, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		t := &api.Tag{}
@@ -54,6 +55,7 @@ func (s *FilterStore) All() ([]*api.Filter, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	filters := make(map[api.FilterID]*api.Filter)
 	filterTags := make(map[api.FilterID][]*api.Tag)

@@ -131,6 +131,15 @@
           </template>
         </el-table-column>
       </el-table>
+      <div class="pagination">
+        <el-pagination
+          layout="prev, pager, next, total"
+          :total="total"
+          :current-page.sync="pagination.page"
+          :page-size="pagination.limit"
+          @current-change="fetch"
+        />
+      </div>
 
       <el-dialog
         title="Delete confirmation"
@@ -169,6 +178,10 @@ export default {
     middleware: 'authenticated',
     data() {
         return {
+            pagination: {
+                page: 1,
+                limit: 10
+            },
             selectedWebsites: [],
             filters: [],
             selected: [],
@@ -181,12 +194,14 @@ export default {
     },
     watch: {
         selected: function () {
+            // this.pagination.page = 1;
             this.fetch();
         }
     },
     computed: {
         ...mapState({
-            websites: state => state.websites.list
+            websites: state => state.websites.list,
+            total: state => state.websites.total
         })
     },
     mounted() {
@@ -212,7 +227,10 @@ export default {
             });
         },
         fetch() {
-            this.$store.dispatch('websites/fetch', this.selected.join(','));
+            this.$store.dispatch('websites/fetch', {
+                filters: this.selected.join(','),
+                pagination: this.pagination
+            });
         },
         successImport(websites) {
             const ws = websites.map(w => new Website(w));
@@ -286,6 +304,14 @@ export default {
 .actions {
     display: flex;
     justify-content: space-between;
+}
+.pagination {
+    text-align: center;
+    margin: 20px;
+}
+
+span.el-pagination__total{
+    display: block !important;
 }
 @-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
 @-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }

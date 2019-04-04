@@ -85,7 +85,6 @@ const startRedisPuller = cluster => {
     const brpop = () => {
 
         if(!hasAwailableWorkers(cluster)) {
-            console.log('no free workers waiting')
             setTimeout( brpop, 500 );
             return;
         }

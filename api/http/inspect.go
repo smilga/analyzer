@@ -51,7 +51,7 @@ func (h *Handler) Inspect(w http.ResponseWriter, r *http.Request, ps httprouter.
 		idMap[id] = true
 	}
 
-	websites, err := h.WebsiteStorage.ByUser(uid)
+	websites, _, err := h.WebsiteStorage.ByUser(uid, &api.Pagination{})
 	if err != nil {
 		h.responseErr(w, err)
 		return

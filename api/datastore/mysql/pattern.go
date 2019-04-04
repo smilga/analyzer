@@ -58,6 +58,7 @@ func (s *PatternStore) Get(id api.PatternID) (*api.Pattern, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		t := &api.Tag{}
@@ -88,6 +89,7 @@ func (s *PatternStore) All() ([]*api.Pattern, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	patterns := make(map[api.PatternID]*api.Pattern)
 	patternTags := make(map[api.PatternID][]*api.Tag)

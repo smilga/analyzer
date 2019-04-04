@@ -58,6 +58,7 @@ func (s *ReportStore) ByWebsite(id api.WebsiteID) (*api.Report, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	patternIDs := []api.PatternID{}
 	for rows.Next() {

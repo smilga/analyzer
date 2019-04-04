@@ -19,6 +19,13 @@ func (h *Handler) Websites(w http.ResponseWriter, r *http.Request, _ httprouter.
 	}
 
 	websites := []*api.Website{}
+	var total int
+
+	pagination, err := parsePagination(r)
+	if err != nil {
+		h.responseErr(w, err)
+		return
+	}
 
 	filterIDs, err := parseFilterString(r)
 	if err != nil {
@@ -26,20 +33,23 @@ func (h *Handler) Websites(w http.ResponseWriter, r *http.Request, _ httprouter.
 		return
 	}
 	if len(filterIDs) == 0 {
-		websites, err = h.WebsiteStorage.ByUser(uid)
+		websites, total, err = h.WebsiteStorage.ByUser(uid, pagination)
 		if err != nil {
 			h.responseErr(w, err)
 			return
 		}
 	} else {
-		websites, err = h.WebsiteStorage.ByFilterID(filterIDs, api.UserID(uid))
+		websites, total, err = h.WebsiteStorage.ByFilterID(filterIDs, api.UserID(uid), pagination)
 		if err != nil {
 			h.responseErr(w, err)
 			return
 		}
 	}
 
-	h.responseJSON(w, websites)
+	h.responseJSON(w, map[string]interface{}{
+		"websites": websites,
+		"total":    total,
+	})
 }
 
 func (h *Handler) SaveWebsite(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -162,4 +172,20 @@ func parseFilterString(r *http.Request) ([]api.FilterID, error) {
 		}
 	}
 	return filterIDs, nil
+}
+
+func parsePagination(r *http.Request) (*api.Pagination, error) {
+	l := r.URL.Query().Get("l")
+	limit, err := strconv.Atoi(l)
+	if err != nil {
+		return nil, err
+	}
+
+	p := r.URL.Query().Get("p")
+	page, err := strconv.Atoi(p)
+	if err != nil {
+		return nil, err
+	}
+
+	return api.NewPagination(limit, page), nil
 }
