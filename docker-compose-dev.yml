@@ -32,7 +32,6 @@ services:
             - ./puppeteer:/puppeteer
         depends_on:
             - redis
-        restart: always
         command: ["npm", "run", "start", "--prefix", "/puppeteer"]
 
     web:
@@ -62,6 +61,7 @@ services:
             - MYSQL_DATABASE=${MYSQL_DATABASE}
         depends_on:
             - database
+            - redis
         ports:
             - "3033:3033"
         command: sh -c "npm rebuild > /dev/null --prefix puppeteer && refresh run"

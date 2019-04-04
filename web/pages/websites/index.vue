@@ -37,6 +37,14 @@
         </el-button>
 
         <el-button
+          type="primary"
+          class="rescan"
+          icon="el-icon-refresh"
+          @click="inspectAll"
+        >
+          Inspect All
+        </el-button>
+        <el-button
           :disabled="selectedWebsites.length === 0"
           type="primary"
           class="rescan"
@@ -210,6 +218,16 @@ export default {
             .then(res => this.filters = res.data.map(p => new Filter(p)));
     },
     methods: {
+        inspectAll() {
+            return this.$axios.get('api/inspect/websites')
+                .then((res) => {
+                    this.$notify.success({
+                        title: 'Start inspect',
+                        message: `${res.data.count} websites will be inspected`,
+                        position: 'bottom-right'
+                    });
+                });
+        },
         deleteSelected() {
             const ids = this.selectedWebsites.map(w => w.id);
             this.$store.dispatch('websites/delete', ids)

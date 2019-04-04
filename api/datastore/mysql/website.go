@@ -29,8 +29,7 @@ func (s *WebsiteStore) ByUser(id api.UserID, p *api.Pagination) ([]*api.Website,
 
 	err = s.DB.Get(&total, `
 		SELECT count(*) FROM websites
-		WHERE user_id=? AND deleted_at IS NULL
-		ORDER BY websites.created_at DESC`, id)
+		WHERE user_id=? AND deleted_at IS NULL`, id)
 	if err != nil {
 		return nil, total, err
 	}
@@ -71,8 +70,10 @@ func (s *WebsiteStore) ByFilterID(filterIDs []api.FilterID, id api.UserID, p *ap
 		return nil, total, err
 	}
 
+	// Maybe this is more correct query
+	//SELECT w.* from websites w RIGHT JOIN matches m ON m.website_id = w.id WHERE m.pattern_id IN (1,2,3) AND m.deleted_at IS NULL AND w.user_id = 1 GROUP BY w.id ORDER BY w.created_at DESC;
 	query, args, err = sqlx.In(`
-		SELECT SQL_CALC_FOUND_ROWS  w.* from matches m
+		SELECT w.* from matches m
 		LEFT JOIN websites w
 		ON m.website_id = w.id
 		WHERE m.pattern_id IN (?)
@@ -86,23 +87,23 @@ func (s *WebsiteStore) ByFilterID(filterIDs []api.FilterID, id api.UserID, p *ap
 	if err != nil {
 		return nil, total, err
 	}
-
-	rows, err := s.DB.Query(query, args...)
+	err = s.DB.Select(&ws, query, args...)
 	if err != nil {
 		return nil, total, err
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		w := &api.Website{}
-		err := rows.Scan(&w.ID, &w.UserID, &w.URL, &w.InspectedAt, &w.CreatedAt, &w.DeletedAt)
-		if err != nil {
-			return nil, total, err
-		}
-		ws = append(ws, w)
+	query, args, err = sqlx.In(`
+		SELECT count(*)
+		FROM (SELECT count(*) FROM websites w
+		RIGHT JOIN matches m ON m.website_id = w.id
+		WHERE m.pattern_id IN (?)
+		AND m.deleted_at IS NULL
+		AND w.user_id = ?
+		GROUP BY w.id) as total`, patternIDs, id)
+	if err != nil {
+		return nil, total, err
 	}
-
-	err = s.DB.Get(&total, "SELECT FOUND_ROWS()")
+	err = s.DB.Get(&total, query, args...)
 	if err != nil {
 		return nil, total, err
 	}
