@@ -1,28 +1,27 @@
 const { Cluster } = require('puppeteer-cluster');
-const Redis = require('redis');
-const client = Redis.createClient({ host: 'redis' });
-const client2 = client.duplicate();
 const Analyzer = require('./Analyzer');
 const Results = require('./Results');
-const Pattern = require('./Pattern');
 const Time = require('./Time');
 const gotoConf = require('./config').gotoConf;
 const UA = require('./config').UA;
 const clusterConf = require('./config').clusterConf;
+const JobManager = require('./JobManager');
+const UPDATE_QUEUE_TIMEOUT = 500;
 
 let cluster = {};
+let manager = new JobManager;
 
 (async () => {
     cluster = await Cluster.launch(clusterConf);
 
-    startRedisPuller(cluster)
+    start(cluster);
 
     cluster.on('taskerror', (err, data) => {
         console.log(`Error crawling ${data}: ${err.message}`);
     });
 
     await cluster.task(async ({ page, data: website }) => {
-        const patterns = await getPatterns();
+        const patterns = await manager.getPatterns();
         const analyzer = new Analyzer(patterns);
 
         const requestIntercept = req => {
@@ -54,7 +53,7 @@ let cluster = {};
                 websiteId: website.id,
                 userId: website.userId
             });
-            client2.lpush(['inspect:results', JSON.stringify(results)]);
+            manager.storeResults(results);
             return;
         }
 
@@ -74,48 +73,33 @@ let cluster = {};
         });
 
         console.log(JSON.stringify(results));
-        client2.lpush(['inspect:results', JSON.stringify(results)]);
+        manager.storeResults(results);
     });
 
     await cluster.idle();
     //await cluster.close();
 })();
 
-const startRedisPuller = cluster => {
-    const brpop = () => {
-
-        if(!hasAwailableWorkers(cluster)) {
-            setTimeout( brpop, 500 );
-            return;
-        }
-
-        client.brpop("pending:websites", 5, function(err, value) {
-            if (err) {
-                console.error(err)
-            }
-            if(value) {
-                let website = JSON.parse(value[1]);
-                cluster.queue(website);
-            }
-            setTimeout( brpop, 500 );
-        });
-    };
-    brpop();
-}
-
-const getPatterns = () => {
-    return new Promise((res, rej) => {
-        client2.hgetall('inspect:patterns', function(err, obj){
-            if(err) {
-                rej(err);
-            }
-            patterns = Object.values(obj).map(v => JSON.parse(v));
-            patterns = patterns.map(p => new Pattern(p))
-            res(patterns)
-        });
-    })
-}
-
 const hasAwailableWorkers = (c) => {
     return c.options.maxConcurrency > c.workersBusy.length;
 }
+
+const start = (cluster) => {
+    const updateQueue = async () => {
+        if(!hasAwailableWorkers(cluster)) {
+            setTimeout( updateQueue, UPDATE_QUEUE_TIMEOUT );
+            return;
+        }
+
+        let website = await manager.nextWebsite();
+        if(website) {
+            cluster.queue(website);
+            setTimeout( updateQueue, UPDATE_QUEUE_TIMEOUT );
+        } else {
+            setTimeout( updateQueue, 100 );
+        }
+    }
+
+    updateQueue();
+}
+

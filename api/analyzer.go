@@ -8,6 +8,11 @@ import (
 	"github.com/go-redis/redis"
 )
 
+const (
+	PendingList = "pending:websites:user:"
+	ListsList   = "pending:lists"
+)
+
 type Analyzer struct {
 	PatternStorage PatternStorage
 	WebsiteStorage WebsiteStorage
@@ -25,10 +30,16 @@ func (a *Analyzer) Inspect(w *Website) error {
 		return err
 	}
 
-	// TODO every user should have seperate list
-	icmd := a.Client.LPush("pending:websites", string(ws))
-	if icmd.Err() != nil {
-		return icmd.Err()
+	list := fmt.Sprintf("%s%v", PendingList, w.UserID)
+
+	_, err = a.Client.SAdd(ListsList, list).Result()
+	if err != nil {
+		return err
+	}
+
+	_, err = a.Client.LPush(list, string(ws)).Result()
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -58,8 +69,8 @@ func (a *Analyzer) StartReporting(cb func(*Website, *AnalyzeStatus)) {
 				continue
 			}
 
-			// TODO this is incorrect
-			l, err := a.Client.LLen("pending:websites").Result()
+			list := fmt.Sprintf("%s%v", PendingList, website.UserID)
+			l, err := a.Client.LLen(list).Result()
 			if err != nil {
 				fmt.Println("analyzer: error getting list length")
 			}
