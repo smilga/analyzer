@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"time"
 )
@@ -34,8 +35,9 @@ type Website struct {
 }
 
 type Pagination struct {
-	limit int
-	page  int
+	limit  int
+	page   int
+	search string
 }
 
 func (p *Pagination) Offset() int {
@@ -56,6 +58,10 @@ func (p *Pagination) Page() int {
 	return p.page
 }
 
+func (p *Pagination) Search() string {
+	return fmt.Sprintf("%%%s%%", p.search)
+}
+
 func NewPagination(limit int, page int) *Pagination {
 	if limit == 0 {
 		limit = 10
@@ -66,6 +72,7 @@ func NewPagination(limit int, page int) *Pagination {
 	return &Pagination{
 		limit,
 		page,
+		"",
 	}
 }
 

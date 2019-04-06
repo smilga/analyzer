@@ -23,6 +23,7 @@
       <span>
         <el-button
           type="danger"
+          plain
           style="margin-right: 4px;"
           :disabled="selectedWebsites.length === 0"
           icon="el-icon-delete"
@@ -38,6 +39,7 @@
 
         <el-button
           type="primary"
+          plain
           class="rescan"
           icon="el-icon-refresh"
           @click="inspectAll"
@@ -46,6 +48,7 @@
         </el-button>
         <el-button
           type="success"
+          plain
           class="rescan"
           icon="el-icon-refresh"
           @click="exportWebsites"
@@ -55,6 +58,7 @@
         <el-button
           :disabled="selectedWebsites.length === 0"
           type="primary"
+          plain
           class="rescan"
           icon="el-icon-refresh"
           @click="inspectSelected"
@@ -271,8 +275,7 @@ export default {
             });
         },
         successImport(websites) {
-            const ws = websites.map(w => new Website(w));
-            this.$store.commit('websites/ADD', ws);
+            this.fetch();
         },
         addWebsite() {
             const w = new Website({ url: this.websiteURL });

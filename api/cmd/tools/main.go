@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -25,6 +28,8 @@ func main() {
 	switch *operation {
 	case "migrate":
 		migrate(db)
+	case "uadd":
+		createUser(db)
 	case "seed":
 		seed(db)
 	default:
@@ -77,6 +82,38 @@ func readMigrations(dir string) []string {
 	}
 
 	return migrations
+}
+
+func createUser(db *sqlx.DB) {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("Enter email: ")
+	email, err := reader.ReadString('\n')
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("\nEnter password: ")
+	pass, err := reader.ReadString('\n')
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	user := &api.User{
+		Name:     strings.TrimSpace(email),
+		Email:    strings.TrimSpace(email),
+		Password: api.Cryptstring(strings.TrimSpace(pass)),
+		CreatedAt: func() *time.Time {
+			now := time.Now()
+			return &now
+		}(),
+	}
+
+	userRepo := mysql.NewUserStore(db)
+	err = userRepo.Save(user)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 }
 
 var admin = &api.User{

@@ -99,7 +99,7 @@ func (h *Handler) ImportWebsites(w http.ResponseWriter, r *http.Request, _ httpr
 		return
 	}
 
-	websites := []*api.Website{}
+	// TODO create batch store
 	for _, r := range records {
 		if len(r) != 1 {
 			// App dont know how to handle this yet
@@ -112,10 +112,9 @@ func (h *Handler) ImportWebsites(w http.ResponseWriter, r *http.Request, _ httpr
 			h.responseErr(w, err)
 			return
 		}
-		websites = append(websites, website)
 	}
 
-	h.responseJSON(w, websites)
+	h.responseJSON(w, "ok")
 }
 
 func (h *Handler) DeleteWebsites(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

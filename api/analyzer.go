@@ -15,12 +15,17 @@ type Analyzer struct {
 	Client         *redis.Client
 }
 
+type AnalyzeStatus struct {
+	Pending int64
+}
+
 func (a *Analyzer) Inspect(w *Website) error {
 	ws, err := json.Marshal(w)
 	if err != nil {
 		return err
 	}
 
+	// TODO every user should have seperate list
 	icmd := a.Client.LPush("pending:websites", string(ws))
 	if icmd.Err() != nil {
 		return icmd.Err()
@@ -29,7 +34,7 @@ func (a *Analyzer) Inspect(w *Website) error {
 	return nil
 }
 
-func (a *Analyzer) StartReporting(cb func(*Website)) {
+func (a *Analyzer) StartReporting(cb func(*Website, *AnalyzeStatus)) {
 	for {
 		ss, err := a.Client.BRPop(time.Second*5, "inspect:results").Result()
 		if err != nil {
@@ -52,7 +57,13 @@ func (a *Analyzer) StartReporting(cb func(*Website)) {
 				fmt.Println("Error saving report: ", err.Error())
 				continue
 			}
-			cb(website)
+
+			// TODO this is incorrect
+			l, err := a.Client.LLen("pending:websites").Result()
+			if err != nil {
+				fmt.Println("analyzer: error getting list length")
+			}
+			cb(website, &AnalyzeStatus{l})
 		}
 	}
 }

@@ -26,13 +26,25 @@ func main() {
 
 	h := http.NewHandler(db)
 	go func() {
-		h.Analyzer.StartReporting(func(w *api.Website) {
+		h.Analyzer.StartReporting(func(w *api.Website, status *api.AnalyzeStatus) {
 			err := h.Messanger.SendToUser(w.UserID, &ws.Msg{
 				Type:   ws.CommMsg,
 				UserID: w.UserID,
 				Message: map[string]interface{}{
 					"action":  "update:website",
 					"website": w,
+				},
+			})
+			if err != nil {
+				fmt.Println("Error sending update website message: ", err)
+			}
+
+			err = h.Messanger.SendToUser(w.UserID, &ws.Msg{
+				Type:   ws.CommMsg,
+				UserID: w.UserID,
+				Message: map[string]interface{}{
+					"action": "report:status",
+					"status": status,
 				},
 			})
 			if err != nil {
@@ -71,10 +83,10 @@ func main() {
 
 	router.GET("/api/ws", h.Upgrade)
 
-	// router.PanicHandler = func(w netHTTP.ResponseWriter, r *netHTTP.Request, err interface{}) {
-	// 	fmt.Printf("Error: %v, URL: %v %v \n", err, r.Method, r.URL)
-	// 	w.WriteHeader(netHTTP.StatusInternalServerError)
-	// }
+	router.PanicHandler = func(w netHTTP.ResponseWriter, r *netHTTP.Request, err interface{}) {
+		fmt.Printf("Error: %v, URL: %v %v \n", err, r.Method, r.URL)
+		w.WriteHeader(netHTTP.StatusInternalServerError)
+	}
 
 	port := os.Getenv("API_PORT")
 	fmt.Println("Server started on port " + port)

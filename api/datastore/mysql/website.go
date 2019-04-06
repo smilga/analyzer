@@ -18,18 +18,23 @@ func (s *WebsiteStore) ByUser(id api.UserID, p *api.Pagination) ([]*api.Website,
 
 	err := s.DB.Select(&ws, `
 		SELECT * FROM websites
-		WHERE user_id=? AND deleted_at IS NULL
+		WHERE user_id=?
+		AND deleted_at IS NULL
+		AND url like ?
 		ORDER BY websites.created_at DESC
 		LIMIT ?
 		OFFSET ?
-		`, id, p.Limit(), p.Offset())
+		`, id, p.Search(), p.Limit(), p.Offset())
 	if err != nil {
 		return nil, total, err
 	}
 
 	err = s.DB.Get(&total, `
 		SELECT count(*) FROM websites
-		WHERE user_id=? AND deleted_at IS NULL`, id)
+		WHERE user_id=?
+		AND deleted_at IS NULL
+		AND url like ?
+		`, id, p.Search())
 	if err != nil {
 		return nil, total, err
 	}
@@ -80,10 +85,11 @@ func (s *WebsiteStore) ByFilterID(filterIDs []api.FilterID, id api.UserID, p *ap
 		AND m.deleted_at IS NULL
 		GROUP BY w.id
 		HAVING w.user_id = ?
+		AND w.url like ?
 		ORDER BY w.created_at DESC
 		LIMIT ?
 		OFFSET ?
-	`, patternIDs, id, p.Limit(), p.Offset())
+	`, patternIDs, id, p.Search(), p.Limit(), p.Offset())
 	if err != nil {
 		return nil, total, err
 	}
@@ -99,7 +105,8 @@ func (s *WebsiteStore) ByFilterID(filterIDs []api.FilterID, id api.UserID, p *ap
 		WHERE m.pattern_id IN (?)
 		AND m.deleted_at IS NULL
 		AND w.user_id = ?
-		GROUP BY w.id) as total`, patternIDs, id)
+		AND w.url like ?
+		GROUP BY w.id) as total`, patternIDs, id, p.Search())
 	if err != nil {
 		return nil, total, err
 	}
