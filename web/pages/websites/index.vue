@@ -45,6 +45,14 @@
           Inspect All
         </el-button>
         <el-button
+          type="success"
+          class="rescan"
+          icon="el-icon-refresh"
+          @click="exportWebsites"
+        >
+          Export
+        </el-button>
+        <el-button
           :disabled="selectedWebsites.length === 0"
           type="primary"
           class="rescan"
@@ -218,6 +226,18 @@ export default {
             .then(res => this.filters = res.data.map(p => new Filter(p)));
     },
     methods: {
+        exportWebsites() {
+            return this.$axios.post(`/api/inspect/export?f=${this.selected.join(',')}`)
+                .then((res) => {
+                    const csv = 'data:text/csv;charset=utf-8,' + res.data;
+                    const encodedUri = encodeURI(csv);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', encodedUri);
+                    link.setAttribute('download', 'results.csv');
+                    document.body.appendChild(link); // Required for FF
+                    link.click(); // This will download the data file named "my_data.csv".
+                });
+        },
         inspectAll() {
             return this.$axios.get('api/inspect/websites')
                 .then((res) => {

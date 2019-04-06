@@ -65,15 +65,16 @@ func main() {
 	router.POST("/api/websites/import", h.ImportWebsites)
 
 	router.GET("/api/inspect/websites/:id", h.InspectWebsite)
-	router.POST("/api/inspect/websites/", h.Inspect)
-	router.GET("/api/inspect/websites/", h.InspectAll)
+	router.POST("/api/inspect/websites", h.Inspect)
+	router.GET("/api/inspect/websites", h.InspectAll)
+	router.POST("/api/inspect/export", h.Export)
 
 	router.GET("/api/ws", h.Upgrade)
 
-	router.PanicHandler = func(w netHTTP.ResponseWriter, r *netHTTP.Request, err interface{}) {
-		fmt.Printf("Error: %v, URL: %v %v \n", err, r.Method, r.URL)
-		w.WriteHeader(netHTTP.StatusInternalServerError)
-	}
+	// router.PanicHandler = func(w netHTTP.ResponseWriter, r *netHTTP.Request, err interface{}) {
+	// 	fmt.Printf("Error: %v, URL: %v %v \n", err, r.Method, r.URL)
+	// 	w.WriteHeader(netHTTP.StatusInternalServerError)
+	// }
 
 	port := os.Getenv("API_PORT")
 	fmt.Println("Server started on port " + port)
