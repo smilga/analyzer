@@ -33,8 +33,9 @@ module.exports = {
     ],
 
     plugins: [
-        '@/plugins/element-ui',
-        '~/plugins/axios'
+        '~/plugins/element-ui',
+        '~/plugins/axios',
+        { src: '~/plugins/toasted', ssr: false }
     ],
 
     modules: [

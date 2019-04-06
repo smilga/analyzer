@@ -18,7 +18,7 @@ export default {
     },
     mounted() {
         if (this.$store.state.auth.user) {
-            new WSocket({ store: this.$store, notify: this.$notify });
+            new WSocket({ store: this.$store, notify: this.$toasted });
         }
     }
 };
@@ -76,6 +76,15 @@ body {
 a, .nuxt-link-active, .nuxt-link, .nuxt-link-exact-active {
     text-decoration: none;
     color: inherit;
+}
+
+.toasted.bubble {
+    padding: 14px 26px 14px 13px !important;
+    border-radius: 8px !important;
+    border: 1px solid #ebeef5 !important;
+    background-color: #fff !important;
+    box-shadow: 0 2px 12px 0 rgba(0,0,0,.1) !important;
+    color: #606266 !important;
 }
 
 @font-face {

@@ -65,10 +65,10 @@ export default class WSocket {
         if (msg.message.action == 'update:website') {
             const w = new Website(msg.message.website);
             this.store.commit('websites/UPDATE', w);
-            this.notify.success({
-                title: w.url,
-                message: 'Inspect complete',
-                position: 'bottom-right'
+            this.notify.show(`<i class="el-notification__icon el-icon-success" style="color: #67c23a;"></i>&nbsp; ${w.url}`, {
+                theme: 'bubble',
+                position: 'bottom-right',
+                duration: 5000
             });
         }
     }
