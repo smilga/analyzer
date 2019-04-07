@@ -79,6 +79,7 @@ func main() {
 	router.GET("/api/inspect/websites/:id", h.InspectWebsite)
 	router.POST("/api/inspect/websites", h.Inspect)
 	router.GET("/api/inspect/websites", h.InspectAll)
+	router.GET("/api/inspect/new", h.InspectNew)
 	router.POST("/api/inspect/export", h.Export)
 
 	router.GET("/api/ws", h.Upgrade)

@@ -18,6 +18,7 @@ type WebsiteStorage interface {
 	ByUser(UserID, *Pagination) ([]*Website, int, error)
 	ByFilterID([]FilterID, UserID, *Pagination) ([]*Website, int, error)
 	Get(WebsiteID) (*Website, error)
+	Where(UserID, string, interface{}) ([]*Website, int, error)
 	Save(*Website) error
 	SaveBatch([]*Website) error
 	Delete(WebsiteID) error

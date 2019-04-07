@@ -22,24 +22,6 @@
       </span>
       <span>
         <el-button
-          type="danger"
-          plain
-          style="margin-right: 4px;"
-          :disabled="selectedWebsites.length === 0"
-          icon="el-icon-delete"
-          @click="deleteTarget = selectedWebsites.slice()"
-        >
-          <template v-if="selectedWebsites.length === 0">
-            Select to delete
-          </template>
-          <template v-else>
-            Delete {{ selectedWebsites.length }}
-          </template>
-        </el-button>
-
-        <el-button
-          type="primary"
-          plain
           class="rescan"
           icon="el-icon-refresh"
           @click="inspectAll"
@@ -47,18 +29,14 @@
           Inspect All
         </el-button>
         <el-button
-          type="success"
-          plain
           class="rescan"
           icon="el-icon-refresh"
-          @click="exportWebsites"
+          @click="inspectNew"
         >
-          Export
+          Inspect new
         </el-button>
         <el-button
           :disabled="selectedWebsites.length === 0"
-          type="primary"
-          plain
           class="rescan"
           icon="el-icon-refresh"
           @click="inspectSelected"
@@ -79,7 +57,7 @@
         multiple
         filterable
         default-first-option
-        placeholder="Filter"
+        placeholder="Filter websites"
       >
         <el-option
           v-for="item in filters"
@@ -88,6 +66,33 @@
           :value="item.id"
         />
       </el-select>
+    </div>
+
+    <div class="table-actions">
+      <el-button
+        type="danger"
+        plain
+        style="margin-right: 4px;"
+        :disabled="selectedWebsites.length === 0"
+        icon="el-icon-delete"
+        @click="deleteTarget = selectedWebsites.slice()"
+      >
+        <template v-if="selectedWebsites.length === 0">
+          Select to delete
+        </template>
+        <template v-else>
+          Delete {{ selectedWebsites.length }}
+        </template>
+      </el-button>
+      <el-button
+        type="success"
+        plain
+        class="rescan"
+        icon="el-icon-download"
+        @click="exportWebsites"
+      >
+        Export filtered
+      </el-button>
     </div>
     <div class="website-list">
       <el-table
@@ -252,6 +257,16 @@ export default {
                     });
                 });
         },
+        inspectNew() {
+            return this.$axios.get('api/inspect/new')
+                .then((res) => {
+                    this.$notify.success({
+                        title: 'Start inspect',
+                        message: `${res.data.count} websites will be inspected`,
+                        position: 'bottom-right'
+                    });
+                });
+        },
         deleteSelected() {
             const ids = this.selectedWebsites.map(w => w.id);
             this.$store.dispatch('websites/delete', ids)
@@ -324,10 +339,6 @@ export default {
     display: flex !important;
 }
 
-.rescan {
-    float: right;
-}
-
 .loading {
     -webkit-animation:spin 1s linear infinite;
     -moz-animation:spin 1s linear infinite;
@@ -349,6 +360,11 @@ export default {
 .pagination {
     text-align: center;
     margin: 20px;
+}
+.table-actions {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
 }
 
 span.el-pagination__total{

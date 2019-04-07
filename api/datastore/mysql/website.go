@@ -47,6 +47,40 @@ func (s *WebsiteStore) ByUser(id api.UserID, p *api.Pagination) ([]*api.Website,
 	return ws, total, nil
 }
 
+func (s *WebsiteStore) Where(id api.UserID, field string, value interface{}) ([]*api.Website, int, error) {
+	ws := []*api.Website{}
+	var total int
+
+	var query string
+	if value == "NULL" {
+		query = fmt.Sprintf("%s IS NULL", field)
+	} else {
+		query = fmt.Sprintf("%s = %s", field, value)
+	}
+
+	err := s.DB.Select(&ws, fmt.Sprintf(`
+		SELECT * FROM websites
+		WHERE user_id=?
+		AND deleted_at IS NULL
+		AND %s
+		`, query), id)
+	if err != nil {
+		return nil, total, err
+	}
+
+	err = s.DB.Get(&total, fmt.Sprintf(`
+		SELECT count(*) FROM websites
+		WHERE user_id=?
+		AND deleted_at IS NULL
+		AND %s
+		`, query), id)
+	if err != nil {
+		return nil, total, err
+	}
+
+	return ws, total, nil
+}
+
 func (s *WebsiteStore) ByFilterID(filterIDs []api.FilterID, id api.UserID, p *api.Pagination) ([]*api.Website, int, error) {
 	ws := []*api.Website{}
 	var total int
