@@ -9,6 +9,7 @@ const UPDATE_QUEUE_TIMEOUT = require('./config').UPDATE_QUEUE_TIMEOUT;
 const JobManager = require('./JobManager');
 
 let cluster = {};
+let analyzer = {};
 let manager = new JobManager;
 
 (async () => {
@@ -16,13 +17,19 @@ let manager = new JobManager;
 
     start(cluster);
 
-    cluster.on('taskerror', (err, data) => {
-        console.log(`Error crawling ${data}: ${err.message}`);
+    cluster.on('taskerror', (err, website) => {
+        let results = new Results({
+            time: new Time,
+            matches: analyzer.getErrorMatch(err.message),
+            websiteId: website.id,
+            userId: website.userId
+        });
+        manager.storeResults(results);
     });
 
     await cluster.task(async ({ page, data: website }) => {
         const patterns = await manager.getPatterns();
-        const analyzer = new Analyzer(patterns);
+        analyzer = new Analyzer(patterns);
 
         const requestIntercept = req => {
             if (req.resourceType() === 'image') {
@@ -71,7 +78,6 @@ let manager = new JobManager;
             websiteId: website.id,
             userId: website.userId
         });
-
         console.log(JSON.stringify(results));
         manager.storeResults(results);
     });

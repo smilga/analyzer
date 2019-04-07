@@ -32,6 +32,8 @@ func main() {
 		createUser(db)
 	case "seed":
 		seed(db)
+	case "seed-new":
+		seedNew(db)
 	default:
 		fmt.Println("No command provided")
 	}
@@ -60,6 +62,14 @@ func seed(db *sqlx.DB) {
 
 	patternRepo := cache.NewPatternCache(mysql.NewPatternStore(db))
 	err = patternRepo.Save(isAlive)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func seedNew(db *sqlx.DB) {
+	patternRepo := cache.NewPatternCache(mysql.NewPatternStore(db))
+	err := patternRepo.Save(hasError)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -130,6 +140,16 @@ var isAlive = &api.Pattern{
 	Type:        api.System,
 	Value:       "isAlive",
 	Description: "checks if website is alive",
+	CreatedAt: func() *time.Time {
+		now := time.Now()
+		return &now
+	}(),
+}
+
+var hasError = &api.Pattern{
+	Type:        api.System,
+	Value:       "hasError",
+	Description: "Error crawling page",
 	CreatedAt: func() *time.Time {
 		now := time.Now()
 		return &now

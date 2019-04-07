@@ -48,12 +48,20 @@ module.exports = class Analyzer {
     }
 
     systemMatch(pattern) {
-        switch(pattern.value) {
-            case 'isAlive':
-                return { value: "true" }
-            default:
-                throw new Error('Unhandled system pattern');
+        if(pattern.value === 'isAlive') {
+            return { value: "true" }
         }
+    }
+
+    getErrorMatch(err) {
+        const patterns = this.extractPatterns(SYSTEM);
+        let matches = [];
+        patterns.forEach(p => {
+            if(p.value === 'hasError') {
+                matches.push(new Match(p.id, err))
+            }
+        })
+        return matches;
     }
 
     async analyzeHTML(page) {
