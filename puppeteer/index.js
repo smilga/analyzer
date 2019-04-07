@@ -5,8 +5,8 @@ const Time = require('./Time');
 const gotoConf = require('./config').gotoConf;
 const UA = require('./config').UA;
 const clusterConf = require('./config').clusterConf;
+const UPDATE_QUEUE_TIMEOUT = require('./config').UPDATE_QUEUE_TIMEOUT;
 const JobManager = require('./JobManager');
-const UPDATE_QUEUE_TIMEOUT = 500;
 
 let cluster = {};
 let manager = new JobManager;
