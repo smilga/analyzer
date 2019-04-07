@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/smilga/analyzer/api"
@@ -99,7 +100,8 @@ func (h *Handler) ImportWebsites(w http.ResponseWriter, r *http.Request, _ httpr
 		return
 	}
 
-	// TODO create batch store
+	var websites []*api.Website
+	now := time.Now()
 	for _, r := range records {
 		if len(r) != 1 {
 			// App dont know how to handle this yet
@@ -107,11 +109,14 @@ func (h *Handler) ImportWebsites(w http.ResponseWriter, r *http.Request, _ httpr
 		}
 		website := &api.Website{URL: r[0]}
 		website.UserID = uid
-		err := h.WebsiteStorage.Save(website)
-		if err != nil {
-			h.responseErr(w, err)
-			return
-		}
+		website.CreatedAt = &now
+		websites = append(websites, website)
+	}
+
+	err = h.WebsiteStorage.SaveBatch(websites)
+	if err != nil {
+		h.responseErr(w, err)
+		return
 	}
 
 	h.responseJSON(w, "ok")

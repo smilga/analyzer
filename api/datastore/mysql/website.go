@@ -173,6 +173,25 @@ func (s *WebsiteStore) Save(w *api.Website) error {
 	return nil
 }
 
+func (s *WebsiteStore) SaveBatch(websites []*api.Website) error {
+	var params []interface{}
+	q := "INSERT INTO websites (user_id, url, created_at) VALUES"
+	for i, w := range websites {
+		q += "(?,?,?)"
+		if i+1 < len(websites) {
+			q += ","
+		}
+		params = append(params, w.UserID, w.URL, w.CreatedAt)
+	}
+
+	_, err := s.DB.Exec(q, params...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *WebsiteStore) Delete(id api.WebsiteID) error {
 	// TODO validate id website belongs to user
 	// pass context down with user id and then check

@@ -19,6 +19,7 @@ type WebsiteStorage interface {
 	ByFilterID([]FilterID, UserID, *Pagination) ([]*Website, int, error)
 	Get(WebsiteID) (*Website, error)
 	Save(*Website) error
+	SaveBatch([]*Website) error
 	Delete(WebsiteID) error
 	AddTags([]*Website) error
 }
