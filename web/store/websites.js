@@ -2,12 +2,9 @@ import Website from '@/models/Website';
 
 export const state = () => ({
     list: [],
-    total: 0
+    total: 0,
+    queued: 0
 });
-
-export const getters = {
-
-};
 
 export const actions = {
     fetch(ctx, { filters = null, pagination }) {
@@ -53,5 +50,8 @@ export const mutations = {
     },
     TOTAL(state, total) {
         state.total = total;
+    },
+    SET_QUEUED(state, count) {
+        state.queued = count;
     }
 };

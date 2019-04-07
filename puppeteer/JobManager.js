@@ -37,7 +37,6 @@ module.exports = class JobManager {
     nextWebsite() {
         return new Promise((res, rej) => {
             if(!this.lists.hasNext()) {
-                console.log('there is no lists', this.lists.lists)
                 return res(null);
             }
 

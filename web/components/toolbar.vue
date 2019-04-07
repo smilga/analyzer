@@ -27,8 +27,8 @@
           <span>Filters</span>
         </el-menu-item>
       </nuxt-link>
-
       <div class="right">
+        <span class="queued">Queue: {{ queued }} websites</span>
         <template v-if="user">
           <el-dropdown class="user-dropdown">
             <div class="el-dropdown-link">
@@ -59,7 +59,8 @@ import { mapState } from 'vuex';
 export default {
     computed: {
         ...mapState({
-            user: state => state.auth.user
+            user: state => state.auth.user,
+            queued: state => state.websites.queued
         })
     },
     methods: {
@@ -94,5 +95,10 @@ export default {
     margin-right: 20px;
     cursor: pointer;
     font-size: 16px;
+}
+.queued {
+    font-size: 14px;
+    margin-right: 70px;
+    color: #606266;
 }
 </style>

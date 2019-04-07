@@ -62,7 +62,7 @@ export default class WSocket {
     }
 
     handleUserMsg(msg) {
-        if (msg.message.action == 'update:website') {
+        if (msg.message.action === 'update:website') {
             const w = new Website(msg.message.website);
             this.store.commit('websites/UPDATE', w);
             this.notify.show(`<i class="el-notification__icon el-icon-success" style="color: #67c23a;"></i>&nbsp; ${w.url}`, {
@@ -70,6 +70,10 @@ export default class WSocket {
                 position: 'bottom-right',
                 duration: 5000
             });
+        }
+
+        if (msg.message.action === 'report:status') {
+            this.store.commit('websites/SET_QUEUED', msg.message.status.Pending);
         }
     }
 
