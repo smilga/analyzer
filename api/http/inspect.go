@@ -92,27 +92,21 @@ func (h *Handler) Inspect(w http.ResponseWriter, r *http.Request, ps httprouter.
 		return
 	}
 
-	// TODO refacture this dont request all websites
 	ids := []api.WebsiteID{}
 	err = json.NewDecoder(r.Body).Decode(&ids)
 	if err != nil {
 		h.responseErr(w, err)
 		return
 	}
-	idMap := make(map[api.WebsiteID]bool, len(ids))
+
 	for _, id := range ids {
-		idMap[id] = true
-	}
-
-	websites, _, err := h.WebsiteStorage.ByUser(uid, &api.Pagination{})
-	if err != nil {
-		h.responseErr(w, err)
-		return
-	}
-
-	for _, website := range websites {
-		if _, ok := idMap[website.ID]; ok {
-			err = h.Analyzer.Inspect(website)
+		websites, _, err := h.WebsiteStorage.Where(uid, "id", int(id))
+		if err != nil {
+			h.responseErr(w, err)
+			return
+		}
+		if len(websites) == 1 {
+			err = h.Analyzer.Inspect(websites[0])
 			if err != nil {
 				h.responseErr(w, err)
 				return

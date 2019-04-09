@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/gorilla/websocket"
 	"github.com/smilga/analyzer/api"
@@ -31,6 +32,15 @@ type Msg struct {
 
 type Messanger struct {
 	Conns map[api.UserID][]*websocket.Conn
+	mutex sync.Mutex
+}
+
+func (m *Messanger) UsersOnline() []api.UserID {
+	ids := []api.UserID{}
+	for id, _ := range m.Conns {
+		ids = append(ids, id)
+	}
+	return ids
 }
 
 func (m *Messanger) ReadMessage(conn *websocket.Conn) error {
@@ -96,6 +106,9 @@ func (m *Messanger) addConn(conn *websocket.Conn, id api.UserID) error {
 }
 
 func (m *Messanger) Send(conn *websocket.Conn, msg *Msg) error {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
 	ms, err := json.Marshal(msg)
 	if err != nil {
 		return err
@@ -109,14 +122,9 @@ func (m *Messanger) Send(conn *websocket.Conn, msg *Msg) error {
 }
 
 func (m *Messanger) SendToUser(id api.UserID, msg *Msg) error {
-	ms, err := json.Marshal(msg)
-	if err != nil {
-		return err
-	}
-
 	if conns, ok := m.Conns[id]; ok {
 		for _, conn := range conns {
-			if err := conn.WriteMessage(websocket.TextMessage, ms); err != nil {
+			if err := m.Send(conn, msg); err != nil {
 				fmt.Println("write socket message error: ", err)
 				continue
 			}
@@ -152,5 +160,6 @@ func (m *Messanger) handlePingMsg(msg string, conn *websocket.Conn) error {
 func NewMessanger() *Messanger {
 	return &Messanger{
 		make(map[api.UserID][]*websocket.Conn),
+		sync.Mutex{},
 	}
 }

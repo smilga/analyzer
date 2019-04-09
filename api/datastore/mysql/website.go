@@ -55,7 +55,7 @@ func (s *WebsiteStore) Where(id api.UserID, field string, value interface{}) ([]
 	if value == "NULL" {
 		query = fmt.Sprintf("%s IS NULL", field)
 	} else {
-		query = fmt.Sprintf("%s = %s", field, value)
+		query = fmt.Sprintf("%s = %v", field, value)
 	}
 
 	err := s.DB.Select(&ws, fmt.Sprintf(`
@@ -109,16 +109,11 @@ func (s *WebsiteStore) ByFilterID(filterIDs []api.FilterID, id api.UserID, p *ap
 		return nil, total, err
 	}
 
-	// Maybe this is more correct query
-	//SELECT w.* from websites w RIGHT JOIN matches m ON m.website_id = w.id WHERE m.pattern_id IN (1,2,3) AND m.deleted_at IS NULL AND w.user_id = 1 GROUP BY w.id ORDER BY w.created_at DESC;
 	query, args, err = sqlx.In(`
-		SELECT w.* from matches m
-		LEFT JOIN websites w
-		ON m.website_id = w.id
+		SELECT w.* from websites w
+		RIGHT JOIN matches m ON m.website_id = w.id
 		WHERE m.pattern_id IN (?)
-		AND m.deleted_at IS NULL
-		GROUP BY w.id
-		HAVING w.user_id = ?
+		AND w.user_id = ?
 		AND w.url like ?
 		ORDER BY w.created_at DESC
 		LIMIT ?
@@ -137,7 +132,6 @@ func (s *WebsiteStore) ByFilterID(filterIDs []api.FilterID, id api.UserID, p *ap
 		FROM (SELECT count(*) FROM websites w
 		RIGHT JOIN matches m ON m.website_id = w.id
 		WHERE m.pattern_id IN (?)
-		AND m.deleted_at IS NULL
 		AND w.user_id = ?
 		AND w.url like ?
 		GROUP BY w.id) as total`, patternIDs, id, p.Search())
@@ -234,7 +228,7 @@ func (s *WebsiteStore) Delete(id api.WebsiteID) error {
 }
 
 func (s *WebsiteStore) storeMatches(id api.WebsiteID, matches []*api.Match) error {
-	_, err := s.DB.Exec(`UPDATE matches SET deleted_at = NOW() WHERE website_id = ?`, id)
+	_, err := s.DB.Exec(`DELETE from matches WHERE website_id = ?`, id)
 	if err != nil {
 		return err
 	}

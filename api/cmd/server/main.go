@@ -5,6 +5,7 @@ import (
 	"log"
 	netHTTP "net/http"
 	"os"
+	"time"
 
 	"github.com/smilga/analyzer/api"
 	"github.com/smilga/analyzer/api/datastore/mysql"
@@ -26,31 +27,53 @@ func main() {
 
 	h := http.NewHandler(db)
 	go func() {
-		h.Analyzer.StartReporting(func(w *api.Website, status *api.AnalyzeStatus) {
-			err := h.Messanger.SendToUser(w.UserID, &ws.Msg{
-				Type:   ws.CommMsg,
-				UserID: w.UserID,
-				Message: map[string]interface{}{
-					"action":  "update:website",
-					"website": w,
-				},
-			})
-			if err != nil {
-				fmt.Println("Error sending update website message: ", err)
-			}
+		h.Analyzer.StartReporting()
+	}()
 
-			err = h.Messanger.SendToUser(w.UserID, &ws.Msg{
-				Type:   ws.CommMsg,
-				UserID: w.UserID,
-				Message: map[string]interface{}{
-					"action": "report:status",
-					"status": status,
-				},
-			})
-			if err != nil {
-				fmt.Println("Error sending update website message: ", err)
+	go func() {
+		ticker := time.NewTicker(time.Millisecond * 500)
+		defer ticker.Stop()
+		done := make(chan bool)
+
+		for {
+			select {
+			case <-done:
+				return
+			case <-ticker.C:
+				ids := h.Messanger.UsersOnline()
+				for _, id := range ids {
+					l, err := h.Analyzer.PendingListLen(id)
+					if err != nil {
+						fmt.Printf("Error reporting list len: %s", err)
+					}
+					err = h.Messanger.SendToUser(id, &ws.Msg{
+						Type:   ws.CommMsg,
+						UserID: id,
+						Message: map[string]interface{}{
+							"action": "report:status",
+							"status": api.AnalyzeStatus{l},
+						},
+					})
+					if err != nil {
+						fmt.Println("Error sending report message: ", err)
+					}
+
+					for _, w := range h.Analyzer.DoneUserWebsites(id) {
+						err := h.Messanger.SendToUser(w.UserID, &ws.Msg{
+							Type:   ws.CommMsg,
+							UserID: w.UserID,
+							Message: map[string]interface{}{
+								"action":  "update:website",
+								"website": w,
+							},
+						})
+						if err != nil {
+							fmt.Println("Error sending update website message: ", err)
+						}
+					}
+				}
 			}
-		})
+		}
 	}()
 
 	router.POST("/api/login", h.Login)

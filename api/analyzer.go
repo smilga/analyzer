@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -14,10 +15,12 @@ const (
 )
 
 type Analyzer struct {
-	PatternStorage PatternStorage
-	WebsiteStorage WebsiteStorage
-	ReportStorage  ReportStorage
-	Client         *redis.Client
+	PatternStorage  PatternStorage
+	WebsiteStorage  WebsiteStorage
+	ReportStorage   ReportStorage
+	Client          *redis.Client
+	UpdatedWebsites map[UserID][]*Website
+	mutex           sync.Mutex
 }
 
 type AnalyzeStatus struct {
@@ -45,7 +48,7 @@ func (a *Analyzer) Inspect(w *Website) error {
 	return nil
 }
 
-func (a *Analyzer) StartReporting(cb func(*Website, *AnalyzeStatus)) {
+func (a *Analyzer) StartReporting() {
 	for {
 		ss, err := a.Client.BRPop(time.Second*5, "inspect:results").Result()
 		if err != nil {
@@ -69,14 +72,31 @@ func (a *Analyzer) StartReporting(cb func(*Website, *AnalyzeStatus)) {
 				continue
 			}
 
-			list := fmt.Sprintf("%s%v", PendingList, website.UserID)
-			l, err := a.Client.LLen(list).Result()
-			if err != nil {
-				fmt.Println("analyzer: error getting list length")
-			}
-			cb(website, &AnalyzeStatus{l})
+			a.mutex.Lock()
+			a.UpdatedWebsites[website.UserID] = append(a.UpdatedWebsites[website.UserID], website)
+			a.mutex.Unlock()
 		}
 	}
+}
+
+func (a *Analyzer) DoneUserWebsites(id UserID) []*Website {
+	websites := []*Website{}
+	a.mutex.Lock()
+	if ws, ok := a.UpdatedWebsites[id]; ok {
+		websites = ws
+		a.UpdatedWebsites[id] = []*Website{}
+	}
+	a.mutex.Unlock()
+	return websites
+}
+
+func (a *Analyzer) PendingListLen(id UserID) (int64, error) {
+	list := fmt.Sprintf("%s%v", PendingList, id)
+	l, err := a.Client.LLen(list).Result()
+	if err != nil {
+		return 0, err
+	}
+	return l, nil
 }
 
 func (a *Analyzer) saveReport(res *Result) (*Website, error) {
