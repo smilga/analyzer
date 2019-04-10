@@ -9,7 +9,6 @@ const UPDATE_QUEUE_TIMEOUT = require('./config').UPDATE_QUEUE_TIMEOUT;
 const JobManager = require('./JobManager');
 
 let cluster = {};
-let analyzer = {};
 let manager = new JobManager;
 
 (async () => {
@@ -17,10 +16,13 @@ let manager = new JobManager;
 
     start(cluster);
 
-    cluster.on('taskerror', (err, website) => {
+    cluster.on('taskerror', async (err, website) => {
+         console.log('=======================')
+         console.log(err.message, website.url)
+        let patterns = await manager.getPatterns();
         let results = new Results({
             time: new Time,
-            matches: analyzer.getErrorMatch(err.message),
+            matches: (new Analyzer(patterns)).getErrorMatch(err.message),
             websiteId: website.id,
             userId: website.userId
         });
@@ -29,7 +31,8 @@ let manager = new JobManager;
 
     await cluster.task(async ({ page, data: website }) => {
         const patterns = await manager.getPatterns();
-        analyzer = new Analyzer(patterns);
+
+        const analyzer = new Analyzer(patterns);
 
         const requestIntercept = req => {
             if (req.resourceType() === 'image') {
@@ -51,22 +54,27 @@ let manager = new JobManager;
         await page.setRequestInterception(true);
         page.on('request', requestIntercept);
 
-        try {
+        // try {
             await page.goto(website.url, gotoConf);
-        } catch(e) {
-            let results = new Results({
-                time: time,
-                matches,
-                websiteId: website.id,
-                userId: website.userId
-            });
-            manager.storeResults(results);
-            return;
-        }
+        // } catch(e) {
+        //     console.log('=======================')
+        //     console.log('error happened: ', website.id)
+        //     console.log(e)
+        //     console.log('=======================')
+        //     let results = new Results({
+        //         time: time,
+        //         matches,
+        //         websiteId: website.id,
+        //         userId: website.userId
+        //     });
+        //     manager.storeResults(results);
+        //     return;
+        // }
 
         time.setTime('loaded');
         matches = matches.concat(analyzer.analyzeSystem());
         matches = matches.concat(analyzer.analyzeResources());
+
         time.setTime('resourceCheck');
         matches = matches.concat(await analyzer.analyzeHTML(page));
         time.setTime('htmlCheck');
@@ -78,7 +86,8 @@ let manager = new JobManager;
             websiteId: website.id,
             userId: website.userId
         });
-        console.log(JSON.stringify(results));
+
+        //console.log(JSON.stringify(results));
         manager.storeResults(results);
     });
 

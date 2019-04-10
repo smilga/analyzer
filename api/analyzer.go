@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -15,12 +14,10 @@ const (
 )
 
 type Analyzer struct {
-	PatternStorage  PatternStorage
-	WebsiteStorage  WebsiteStorage
-	ReportStorage   ReportStorage
-	Client          *redis.Client
-	UpdatedWebsites map[UserID][]*Website
-	mutex           sync.Mutex
+	PatternStorage PatternStorage
+	WebsiteStorage WebsiteStorage
+	ReportStorage  ReportStorage
+	Client         *redis.Client
 }
 
 type AnalyzeStatus struct {
@@ -48,7 +45,7 @@ func (a *Analyzer) Inspect(w *Website) error {
 	return nil
 }
 
-func (a *Analyzer) StartReporting() {
+func (a *Analyzer) StartReporting(cb func(*Website)) {
 	for {
 		ss, err := a.Client.BRPop(time.Second*5, "inspect:results").Result()
 		if err != nil {
@@ -72,22 +69,9 @@ func (a *Analyzer) StartReporting() {
 				continue
 			}
 
-			a.mutex.Lock()
-			a.UpdatedWebsites[website.UserID] = append(a.UpdatedWebsites[website.UserID], website)
-			a.mutex.Unlock()
+			cb(website)
 		}
 	}
-}
-
-func (a *Analyzer) DoneUserWebsites(id UserID) []*Website {
-	websites := []*Website{}
-	a.mutex.Lock()
-	if ws, ok := a.UpdatedWebsites[id]; ok {
-		websites = ws
-		a.UpdatedWebsites[id] = []*Website{}
-	}
-	a.mutex.Unlock()
-	return websites
 }
 
 func (a *Analyzer) PendingListLen(id UserID) (int64, error) {

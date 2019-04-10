@@ -58,7 +58,6 @@ func NewHandler(db *sqlx.DB) *Handler {
 			Client: redis.NewClient(&redis.Options{
 				Addr: "redis:6379",
 			}),
-			UpdatedWebsites: make(map[api.UserID][]*api.Website),
 		},
 		Messanger: ws.NewMessanger(),
 	}

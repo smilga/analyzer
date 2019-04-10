@@ -72,7 +72,7 @@ module.exports = class Analyzer {
     }
 
     async htmlMatch(page, patterns) {
-        page.on('console', consoleObj => console.log(consoleObj.text()));
+        //page.on('console', consoleObj => console.log(consoleObj.text()));
 
         return await page.evaluate((toJSONFn, pat) => {
             const toJSON = new Function(' return (' + toJSONFn + ').apply(null, arguments)');

@@ -129,8 +129,6 @@ func (m *Messanger) SendToUser(id api.UserID, msg *Msg) error {
 				continue
 			}
 		}
-	} else {
-		return fmt.Errorf("Cannt find WS connectino by user: %d", id)
 	}
 
 	return nil

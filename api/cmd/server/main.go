@@ -27,7 +27,19 @@ func main() {
 
 	h := http.NewHandler(db)
 	go func() {
-		h.Analyzer.StartReporting()
+		h.Analyzer.StartReporting(func(w *api.Website) {
+			err := h.Messanger.SendToUser(w.UserID, &ws.Msg{
+				Type:   ws.CommMsg,
+				UserID: w.UserID,
+				Message: map[string]interface{}{
+					"action":  "update:website",
+					"website": w,
+				},
+			})
+			if err != nil {
+				fmt.Println("Error sending update website message: ", err)
+			}
+		})
 	}()
 
 	go func() {
@@ -58,19 +70,6 @@ func main() {
 						fmt.Println("Error sending report message: ", err)
 					}
 
-					for _, w := range h.Analyzer.DoneUserWebsites(id) {
-						err := h.Messanger.SendToUser(w.UserID, &ws.Msg{
-							Type:   ws.CommMsg,
-							UserID: w.UserID,
-							Message: map[string]interface{}{
-								"action":  "update:website",
-								"website": w,
-							},
-						})
-						if err != nil {
-							fmt.Println("Error sending update website message: ", err)
-						}
-					}
 				}
 			}
 		}
