@@ -6,6 +6,7 @@ const gotoConf = require('./config').gotoConf;
 const UA = require('./config').UA;
 const clusterConf = require('./config').clusterConf;
 const UPDATE_QUEUE_TIMEOUT = require('./config').UPDATE_QUEUE_TIMEOUT;
+const PAGE_LOAD_TIMEOUT = require('./config').PAGE_LOAD_TIMEOUT;
 const JobManager = require('./JobManager');
 
 let cluster = {};
@@ -50,26 +51,12 @@ let manager = new JobManager;
         let matches = [];
 
         time.setTime('started');
+        await page.setDefaultTimeout(PAGE_LOAD_TIMEOUT);
         await page.setUserAgent(UA);
         await page.setRequestInterception(true);
         page.on('request', requestIntercept);
 
-        // try {
-            await page.goto(website.url, gotoConf);
-        // } catch(e) {
-        //     console.log('=======================')
-        //     console.log('error happened: ', website.id)
-        //     console.log(e)
-        //     console.log('=======================')
-        //     let results = new Results({
-        //         time: time,
-        //         matches,
-        //         websiteId: website.id,
-        //         userId: website.userId
-        //     });
-        //     manager.storeResults(results);
-        //     return;
-        // }
+        await page.goto(website.url, gotoConf);
 
         time.setTime('loaded');
         matches = matches.concat(analyzer.analyzeSystem());
