@@ -53,6 +53,10 @@ func (p *Pagination) Limit() int {
 	return p.limit
 }
 
+func (p *Pagination) NoLimit() bool {
+	return p.limit == 0
+}
+
 func (p *Pagination) Page() int {
 	if p.page == 0 {
 		return 1

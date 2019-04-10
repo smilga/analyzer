@@ -39,9 +39,11 @@ func (s *WebsiteStore) ByUser(id api.UserID, p *api.Pagination) ([]*api.Website,
 		return nil, total, err
 	}
 
-	err = s.AddTags(ws)
-	if err != nil {
-		return nil, total, err
+	if !p.NoLimit() {
+		err = s.AddTags(ws)
+		if err != nil {
+			return nil, total, err
+		}
 	}
 
 	return ws, total, nil
@@ -143,9 +145,11 @@ func (s *WebsiteStore) ByFilterID(filterIDs []api.FilterID, id api.UserID, p *ap
 		return nil, total, err
 	}
 
-	err = s.AddTags(ws)
-	if err != nil {
-		return nil, total, err
+	if !p.NoLimit() {
+		err = s.AddTags(ws)
+		if err != nil {
+			return nil, total, err
+		}
 	}
 
 	return ws, total, nil
@@ -202,6 +206,30 @@ func (s *WebsiteStore) Save(w *api.Website) error {
 }
 
 func (s *WebsiteStore) SaveBatch(websites []*api.Website) error {
+	batchLimit := 20000
+
+	if len(websites) > batchLimit {
+		chunks := int(len(websites) / batchLimit)
+		left := len(websites) % batchLimit
+
+		for i := 0; i < chunks; i++ {
+			err := s.saveBatch(websites[i*batchLimit : (i+1)*batchLimit])
+			if err != nil {
+				return err
+			}
+		}
+		err := s.saveBatch(websites[chunks*batchLimit : chunks*batchLimit+left])
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return s.saveBatch(websites)
+}
+
+func (s *WebsiteStore) saveBatch(websites []*api.Website) error {
 	var params []interface{}
 	q := "INSERT INTO websites (user_id, url, created_at) VALUES"
 	for i, w := range websites {
