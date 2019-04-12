@@ -21,7 +21,6 @@ func (s *WebsiteStore) ByUser(id api.UserID, p *api.Pagination) ([]*api.Website,
 		WHERE user_id=?
 		AND deleted_at IS NULL
 		AND url like ?
-		ORDER BY websites.created_at DESC
 		LIMIT ?
 		OFFSET ?
 		`, id, p.Search(), p.Limit(), p.Offset())
@@ -110,14 +109,13 @@ func (s *WebsiteStore) ByFilterID(filterIDs []api.FilterID, id api.UserID, p *ap
 	if err != nil {
 		return nil, total, err
 	}
-
+	// SELECT w.* from websites w WHERE w.id IN (SELECT website_id from matches where pattern_id in (?) GROUP BY website_id) AND w.user_id = ? AND w.url like '%%' LIMIT 10 OFFSET 0;
 	query, args, err = sqlx.In(`
 		SELECT w.* from websites w
 		RIGHT JOIN matches m ON m.website_id = w.id
 		WHERE m.pattern_id IN (?)
 		AND w.user_id = ?
 		AND w.url like ?
-		ORDER BY w.created_at DESC
 		LIMIT ?
 		OFFSET ?
 	`, patternIDs, id, p.Search(), p.Limit(), p.Offset())
@@ -128,7 +126,9 @@ func (s *WebsiteStore) ByFilterID(filterIDs []api.FilterID, id api.UserID, p *ap
 	if err != nil {
 		return nil, total, err
 	}
-
+	// SELECT count(*) from websites w where w.id in (SELECT website_id from matches where pattern_id in (1,2) GROUP BY website_id) AND w.user_id = ? AND w.url like '%%';
+	// SELECT count(DISTINCT w.id) FROM websites w INNER JOIN matches m ON m.website_id = w.id WHERE m.pattern_id IN (?) AND w.user_id = ?;
+	// add like search dinamically
 	query, args, err = sqlx.In(`
 		SELECT count(*)
 		FROM (SELECT count(*) FROM websites w
