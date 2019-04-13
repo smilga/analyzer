@@ -8,7 +8,7 @@ export const state = () => ({
 
 export const actions = {
     fetch(ctx, { filters = null, pagination }) {
-        const q = `?f=${filters}&p=${pagination.page}&l=${pagination.limit}`;
+        const q = `?f=${filters}&p=${pagination.page}&l=${pagination.limit}&q=${pagination.search}`;
         return this.$axios.get('/api/websites' + q)
             .then((res) => {
                 ctx.commit('SET', res.data.websites.map(w => new Website(w)));

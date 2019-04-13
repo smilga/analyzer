@@ -109,13 +109,15 @@ func (s *WebsiteStore) ByFilterID(filterIDs []api.FilterID, id api.UserID, p *ap
 	if err != nil {
 		return nil, total, err
 	}
-	// SELECT w.* from websites w WHERE w.id IN (SELECT website_id from matches where pattern_id in (?) GROUP BY website_id) AND w.user_id = ? AND w.url like '%%' LIMIT 10 OFFSET 0;
+
+	// TODO if this slows down use INNER JOIN
 	query, args, err = sqlx.In(`
-		SELECT w.* from websites w
-		RIGHT JOIN matches m ON m.website_id = w.id
+		SELECT w.* FROM websites w
+		INNER JOIN matches m ON m.website_id = w.id
 		WHERE m.pattern_id IN (?)
 		AND w.user_id = ?
 		AND w.url like ?
+		GROUP BY w.id
 		LIMIT ?
 		OFFSET ?
 	`, patternIDs, id, p.Search(), p.Limit(), p.Offset())
@@ -126,17 +128,15 @@ func (s *WebsiteStore) ByFilterID(filterIDs []api.FilterID, id api.UserID, p *ap
 	if err != nil {
 		return nil, total, err
 	}
-	// SELECT count(*) from websites w where w.id in (SELECT website_id from matches where pattern_id in (1,2) GROUP BY website_id) AND w.user_id = ? AND w.url like '%%';
-	// SELECT count(DISTINCT w.id) FROM websites w INNER JOIN matches m ON m.website_id = w.id WHERE m.pattern_id IN (?) AND w.user_id = ?;
-	// add like search dinamically
-	query, args, err = sqlx.In(`
-		SELECT count(*)
-		FROM (SELECT count(*) FROM websites w
-		RIGHT JOIN matches m ON m.website_id = w.id
-		WHERE m.pattern_id IN (?)
-		AND w.user_id = ?
-		AND w.url like ?
-		GROUP BY w.id) as total`, patternIDs, id, p.Search())
+
+	countQ := "SELECT COUNT(DISTINCT w.id) FROM websites w INNER JOIN matches m ON m.website_id = w.id WHERE m.pattern_id IN (?) AND w.user_id = ?"
+	countArgs := []interface{}{patternIDs, id}
+	if p.ShouldSearch() {
+		countQ = fmt.Sprintf("%s AND url like ?", countQ)
+		countArgs = append(countArgs, p.Search())
+	}
+
+	query, args, err = sqlx.In(countQ, countArgs...)
 	if err != nil {
 		return nil, total, err
 	}

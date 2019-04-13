@@ -1,5 +1,5 @@
 <template>
-  <div class="websites">
+  <div class="websites" @keyup.enter="fetch">
     <div class="actions">
       <span>
         <el-button icon="el-icon-circle-plus" @click="dialog.addWebsite = true">
@@ -50,7 +50,9 @@
         </el-button>
       </span>
     </div>
-    <div class="filter">
+    <div class="filter" />
+
+    <div class="table-actions">
       <el-select
         v-model="selected"
         class="filter-list"
@@ -66,36 +68,40 @@
           :value="item.id"
         />
       </el-select>
-    </div>
-
-    <div class="table-actions">
+      <!-- <el-button -->
+      <!--   type="danger" -->
+      <!--   plain -->
+      <!--   style="margin-right: 4px;" -->
+      <!--   :disabled="selectedWebsites.length === 0" -->
+      <!--   icon="el-icon-delete" -->
+      <!--   @click="deleteTarget = selectedWebsites.slice()" -->
+      <!-- > -->
+      <!--   <template v-if="selectedWebsites.length === 0"> -->
+      <!--     Select to delete -->
+      <!--   </template> -->
+      <!--   <template v-else> -->
+      <!--     Delete {{ selectedWebsites.length }} -->
+      <!--   </template> -->
+      <!-- </el-button> -->
+      <el-input v-model="pagination.search" class="search-input" placeholder="Search" />
       <el-button
-        type="danger"
-        plain
-        style="margin-right: 4px;"
-        :disabled="selectedWebsites.length === 0"
-        icon="el-icon-delete"
-        @click="deleteTarget = selectedWebsites.slice()"
-      >
-        <template v-if="selectedWebsites.length === 0">
-          Select to delete
-        </template>
-        <template v-else>
-          Delete {{ selectedWebsites.length }}
-        </template>
-      </el-button>
-      <el-button
-        type="success"
-        plain
-        class="rescan"
-        icon="el-icon-download"
-        @click="exportWebsites"
-      >
-        Export filtered
-      </el-button>
+        type="primary"
+        icon="el-icon-search"
+        @click="fetch"
+      />
+      <!-- <el-button -->
+      <!--   type="success" -->
+      <!--   plain -->
+      <!--   class="rescan" -->
+      <!--   icon="el-icon-download" -->
+      <!--   @click="exportWebsites" -->
+      <!-- > -->
+      <!--   Export filtered -->
+      <!-- </el-button> -->
     </div>
     <div class="website-list">
       <el-table
+        v-loading="fetching"
         class="website-table"
         :data="websites"
         style="width: 100%"
@@ -203,9 +209,11 @@ export default {
     middleware: 'authenticated',
     data() {
         return {
+            fetching: false,
             pagination: {
                 page: 1,
-                limit: 10
+                limit: 10,
+                search: ''
             },
             selectedWebsites: [],
             filters: [],
@@ -216,12 +224,6 @@ export default {
             websiteURL: '',
             deleteTarget: null
         };
-    },
-    watch: {
-        selected: function () {
-            // this.pagination.page = 1;
-            this.fetch();
-        }
     },
     computed: {
         ...mapState({
@@ -284,10 +286,11 @@ export default {
             });
         },
         fetch() {
+            this.fetching = true;
             this.$store.dispatch('websites/fetch', {
                 filters: this.selected.join(','),
                 pagination: this.pagination
-            });
+            }).then(this.fetching = false);
         },
         successImport(websites) {
             this.fetch();
@@ -370,7 +373,12 @@ export default {
 span.el-pagination__total{
     display: block !important;
 }
-@-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
-@-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }
-@keyframes spin { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } }
+.search-input {
+    max-width: 250px;
+    margin: 0 5px;
+    max-width: 250px;
+}
+.filter-list {
+    flex-grow: 1;
+}
 </style>

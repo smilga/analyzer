@@ -68,7 +68,11 @@ func (p *Pagination) Search() string {
 	return fmt.Sprintf("%%%s%%", p.search)
 }
 
-func NewPagination(limit int, page int) *Pagination {
+func (p *Pagination) ShouldSearch() bool {
+	return len(p.search) > 0
+}
+
+func NewPagination(limit int, page int, search string) *Pagination {
 	if limit == 0 {
 		limit = 10
 	}
@@ -78,7 +82,7 @@ func NewPagination(limit int, page int) *Pagination {
 	return &Pagination{
 		limit,
 		page,
-		"",
+		search,
 	}
 }
 

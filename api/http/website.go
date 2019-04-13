@@ -191,5 +191,7 @@ func parsePagination(r *http.Request) (*api.Pagination, error) {
 		return nil, err
 	}
 
-	return api.NewPagination(limit, page), nil
+	search := r.URL.Query().Get("q")
+
+	return api.NewPagination(limit, page, search), nil
 }
