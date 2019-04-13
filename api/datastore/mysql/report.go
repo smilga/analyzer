@@ -17,6 +17,12 @@ func (s *ReportStore) Save(r *api.Report) error {
 		r.CreatedAt = &now
 	}
 
+	// TODO use triggers to move old reports to archive table
+	_, err := s.DB.Exec(`UPDATE reports SET deleted_at=NOW() where website_id=?`, r.WebsiteID)
+	if err != nil {
+		return err
+	}
+
 	res, err := s.DB.Exec(`
 		INSERT INTO reports
 		(id, user_id, website_id, started_in, loaded_in, resource_check_in, html_check_in, total_in, created_at)
@@ -45,8 +51,8 @@ func (s *ReportStore) ByWebsite(id api.WebsiteID) (*api.Report, error) {
 		SELECT r.*, w.url FROM reports r
 		LEFT JOIN websites w on w.id = r.website_id
 		WHERE r.website_id = ?
-		ORDER BY created_at DESC limit 1
-	`, id).Scan(&r.ID, &r.UserID, &r.WebsiteID, &r.StartedIn, &r.LoadedIn, &r.ResourceCheckIn, &r.HTMLCheckIn, &r.TotalIn, &r.CreatedAt,
+		AND r.deleted_at IS NULL
+	`, id).Scan(&r.ID, &r.UserID, &r.WebsiteID, &r.StartedIn, &r.LoadedIn, &r.ResourceCheckIn, &r.HTMLCheckIn, &r.TotalIn, &r.CreatedAt, &r.DeletedAt,
 		&r.WebsiteURL)
 	if err != nil {
 		return nil, err

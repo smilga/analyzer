@@ -110,11 +110,11 @@ func (s *WebsiteStore) ByFilterID(filterIDs []api.FilterID, id api.UserID, p *ap
 		return nil, total, err
 	}
 
-	// TODO if this slows down use INNER JOIN
 	query, args, err = sqlx.In(`
 		SELECT w.* FROM websites w
 		INNER JOIN matches m ON m.website_id = w.id
 		WHERE m.pattern_id IN (?)
+		AND m.deleted_at IS NULL
 		AND w.user_id = ?
 		AND w.url like ?
 		GROUP BY w.id
@@ -129,7 +129,14 @@ func (s *WebsiteStore) ByFilterID(filterIDs []api.FilterID, id api.UserID, p *ap
 		return nil, total, err
 	}
 
-	countQ := "SELECT COUNT(DISTINCT w.id) FROM websites w INNER JOIN matches m ON m.website_id = w.id WHERE m.pattern_id IN (?) AND w.user_id = ?"
+	// Add searh dynamicly because of count slow down with "like query"
+	countQ := `
+		SELECT COUNT(DISTINCT w.id)
+		FROM websites w
+		INNER JOIN matches m ON m.website_id = w.id
+		WHERE m.pattern_id IN (?)
+		AND m.deleted_at IS NULL
+		AND w.user_id = ?`
 	countArgs := []interface{}{patternIDs, id}
 	if p.ShouldSearch() {
 		countQ = fmt.Sprintf("%s AND url like ?", countQ)
@@ -256,7 +263,10 @@ func (s *WebsiteStore) Delete(id api.WebsiteID) error {
 }
 
 func (s *WebsiteStore) storeMatches(id api.WebsiteID, matches []*api.Match) error {
-	_, err := s.DB.Exec(`DELETE from matches WHERE website_id = ?`, id)
+	// TODO use triggers to move historycal data to other tables
+	// move matches and reports to archived table
+
+	_, err := s.DB.Exec(`UPDATE matches SET deleted_at = NOW() WHERE website_id = ?`, id)
 	if err != nil {
 		return err
 	}
@@ -293,7 +303,13 @@ func (s *WebsiteStore) AddTags(websites []*api.Website) error {
 	}
 
 	query, args, err := sqlx.In(`
-		SELECT w.id, t.* FROM websites w INNER JOIN matches m on m.website_id = w.id INNER JOIN pattern_tags pt on pt.pattern_id = m.pattern_id INNER JOIN tags t on t.id = pt.tag_id WHERE w.id in (?) AND m.deleted_at IS NULL;
+		SELECT w.id, t.*
+		FROM websites w
+		INNER JOIN matches m on m.website_id = w.id
+		INNER JOIN pattern_tags pt on pt.pattern_id = m.pattern_id
+		INNER JOIN tags t on t.id = pt.tag_id
+		WHERE w.id in (?)
+		AND m.deleted_at IS NULL;
 	`, websiteIDs)
 	if err != nil {
 		return err

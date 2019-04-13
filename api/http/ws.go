@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -17,7 +16,7 @@ var upgrader = websocket.Upgrader{
 }
 
 func (h *Handler) Upgrade(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	conn, err := upgrader.Upgrade(w, r, nil) // error ignored for sake of simplicity
+	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		h.responseErr(w, err)
 		return
@@ -26,7 +25,6 @@ func (h *Handler) Upgrade(w http.ResponseWriter, r *http.Request, _ httprouter.P
 	for {
 		err = h.Messanger.ReadMessage(conn)
 		if err != nil {
-			fmt.Println("Error readin ws message ", err)
 			conn.Close()
 			break
 		}

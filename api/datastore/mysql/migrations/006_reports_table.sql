@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS reports (
     html_check_in VARCHAR(10) NULL DEFAULT NULL,
     total_in VARCHAR(10) NULL DEFAULT NULL,
     created_at DATETIME NULL DEFAULT NULL,
+    deleted_at DATETIME NULL DEFAULT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (website_id) REFERENCES websites(id)
