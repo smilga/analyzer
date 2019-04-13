@@ -48,7 +48,6 @@ func (m *Messanger) ReadMessage(conn *websocket.Conn) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("message tyype %d ", msgType)
 
 	switch msgType {
 	case websocket.TextMessage:
@@ -125,7 +124,6 @@ func (m *Messanger) SendToUser(id api.UserID, msg *Msg) error {
 	if conns, ok := m.Conns[id]; ok {
 		for _, conn := range conns {
 			if err := m.Send(conn, msg); err != nil {
-				fmt.Println("write socket message error: ", err)
 				continue
 			}
 		}
