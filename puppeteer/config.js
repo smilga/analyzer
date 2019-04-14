@@ -20,12 +20,6 @@ const cluster = {
     timeout: TIMEOUT, // Specify a timeout for all task
 }
 
-const read = () => {
-    console.log("READING ENVIROMENTS")
-    console.log(process.env)
-}
-read();
-
 module.exports = {
     goto,
     UA,
