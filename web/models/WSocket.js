@@ -74,6 +74,7 @@ export default class WSocket {
 
         if (msg.message.action === 'report:status') {
             this.store.commit('websites/SET_QUEUED', msg.message.status.Pending);
+            this.store.commit('websites/SET_TIMEOUTED', msg.message.status.Timeouted);
         }
     }
 

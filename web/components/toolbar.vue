@@ -28,7 +28,8 @@
         </el-menu-item>
       </nuxt-link>
       <div class="right">
-        <span class="queued">Queue: {{ queued }} websites</span>
+        <span class="stats">Queue: {{ queued }} websites</span>
+        <span class="stats">Timeouted: {{ timeouted }} websites</span>
         <template v-if="user">
           <el-dropdown class="user-dropdown">
             <div class="el-dropdown-link">
@@ -60,7 +61,8 @@ export default {
     computed: {
         ...mapState({
             user: state => state.auth.user,
-            queued: state => state.websites.queued
+            queued: state => state.websites.queued,
+            timeouted: state => state.websites.timeouted
         })
     },
     methods: {
@@ -96,7 +98,7 @@ export default {
     cursor: pointer;
     font-size: 16px;
 }
-.queued {
+.stats {
     font-size: 14px;
     margin-right: 70px;
     color: #606266;

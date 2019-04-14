@@ -8,9 +8,15 @@ import (
 	"github.com/go-redis/redis"
 )
 
+type list string
+
 const (
-	PendingList = "pending:websites:user:"
-	ListsList   = "pending:lists"
+	PendingList        list = "pending:websites:user:"
+	ListsList          list = "pending:lists"
+	TimeoutedList      list = "timeouted:websites:user:"
+	TimeoutedListsList list = "timeouted:lists"
+	ResultsList        list = "inspect:results"
+	PatternsList       list = "inspect:patterns"
 )
 
 type Analyzer struct {
@@ -21,7 +27,8 @@ type Analyzer struct {
 }
 
 type AnalyzeStatus struct {
-	Pending int64
+	Pending   int64
+	Timeouted int64
 }
 
 func (a *Analyzer) Inspect(w *Website) error {
@@ -32,7 +39,7 @@ func (a *Analyzer) Inspect(w *Website) error {
 
 	list := fmt.Sprintf("%s%v", PendingList, w.UserID)
 
-	_, err = a.Client.SAdd(ListsList, list).Result()
+	_, err = a.Client.SAdd(string(ListsList), list).Result()
 	if err != nil {
 		return err
 	}
@@ -45,9 +52,9 @@ func (a *Analyzer) Inspect(w *Website) error {
 	return nil
 }
 
-func (a *Analyzer) StartReporting(cb func(*Website)) {
+func (a *Analyzer) StartReporting() {
 	for {
-		ss, err := a.Client.BRPop(time.Second*5, "inspect:results").Result()
+		ss, err := a.Client.BRPop(time.Second*5, string(ResultsList)).Result()
 		if err != nil {
 			if err != redis.Nil {
 				fmt.Println("Error reading redis list: ", err)
@@ -63,19 +70,17 @@ func (a *Analyzer) StartReporting(cb func(*Website)) {
 				continue
 			}
 
-			website, err := a.saveReport(result)
+			_, err := a.saveReport(result)
 			if err != nil {
 				fmt.Println("Error saving report: ", err.Error())
 				continue
 			}
-
-			cb(website)
 		}
 	}
 }
 
-func (a *Analyzer) PendingListLen(id UserID) (int64, error) {
-	list := fmt.Sprintf("%s%v", PendingList, id)
+func (a *Analyzer) ListLen(ll list, id UserID) (int64, error) {
+	list := fmt.Sprintf("%s%v", ll, id)
 	l, err := a.Client.LLen(list).Result()
 	if err != nil {
 		return 0, err

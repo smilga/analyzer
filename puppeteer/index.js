@@ -2,32 +2,33 @@ const { Cluster } = require('puppeteer-cluster');
 const Analyzer = require('./Analyzer');
 const Results = require('./Results');
 const Time = require('./Time');
-const gotoConf = require('./config').gotoConf;
-const UA = require('./config').UA;
-const clusterConf = require('./config').clusterConf;
-const UPDATE_QUEUE_TIMEOUT = require('./config').UPDATE_QUEUE_TIMEOUT;
-const PAGE_LOAD_TIMEOUT = require('./config').PAGE_LOAD_TIMEOUT;
+const config = require('./config');
 const JobManager = require('./JobManager');
+const ERR = require('./Errors');
 
 let cluster = {};
 let manager = new JobManager;
 
 (async () => {
-    cluster = await Cluster.launch(clusterConf);
+    cluster = await Cluster.launch(config.cluster);
 
     start(cluster);
 
     cluster.on('taskerror', async (err, website) => {
-         console.log('=======================')
-         console.log(err.message, website.url)
-        let patterns = await manager.getPatterns();
-        let results = new Results({
-            time: new Time,
-            matches: (new Analyzer(patterns)).getErrorMatch(err.message),
-            websiteId: website.id,
-            userId: website.userId
-        });
-        manager.storeResults(results);
+        if(err.message.includes(ERR.TIMEOUT) && website.retry !== parseInt(process.env.RETRY)) {
+            console.log("TIMEOUT ERR", website.url)
+            manager.storeTimeouted(website);
+        } else {
+            console.log('OTHER ERROR', website.url)
+            let patterns = await manager.getPatterns();
+            let results = new Results({
+                time: new Time,
+                matches: (new Analyzer(patterns)).getErrorMatch(err.message),
+                websiteId: website.id,
+                userId: website.userId
+            });
+            manager.storeResults(results);
+        }
     });
 
     await cluster.task(async ({ page, data: website }) => {
@@ -51,12 +52,12 @@ let manager = new JobManager;
         let matches = [];
 
         time.setTime('started');
-        await page.setDefaultTimeout(PAGE_LOAD_TIMEOUT);
-        await page.setUserAgent(UA);
+        await page.setDefaultTimeout(config.TIMEOUT);
+        await page.setUserAgent(config.UA);
         await page.setRequestInterception(true);
         page.on('request', requestIntercept);
 
-        await page.goto(website.url, gotoConf);
+        await page.goto(website.url, config.goto);
 
         time.setTime('loaded');
         matches = matches.concat(analyzer.analyzeSystem());
@@ -87,16 +88,17 @@ const hasAwailableWorkers = (c) => {
 }
 
 const start = (cluster) => {
+    console.log('start')
     const updateQueue = async () => {
         if(!hasAwailableWorkers(cluster)) {
-            setTimeout( updateQueue, UPDATE_QUEUE_TIMEOUT );
+            setTimeout( updateQueue, config.UPDATE_QUEUE_TIMEOUT );
             return;
         }
 
         let website = await manager.nextWebsite();
         if(website) {
             cluster.queue(website);
-            setTimeout( updateQueue, UPDATE_QUEUE_TIMEOUT );
+            setTimeout( updateQueue, config.UPDATE_QUEUE_TIMEOUT );
         } else {
             setTimeout( updateQueue, 100 );
         }

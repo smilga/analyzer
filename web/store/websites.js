@@ -3,7 +3,8 @@ import Website from '@/models/Website';
 export const state = () => ({
     list: [],
     total: 0,
-    queued: 0
+    queued: 0,
+    timeouted: 0
 });
 
 export const actions = {
@@ -53,5 +54,8 @@ export const mutations = {
     },
     SET_QUEUED(state, count) {
         state.queued = count;
+    },
+    SET_TIMEOUTED(state, timeouted) {
+        state.timeouted = timeouted;
     }
 };

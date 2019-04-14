@@ -27,19 +27,7 @@ func main() {
 
 	h := http.NewHandler(db)
 	go func() {
-		h.Analyzer.StartReporting(func(w *api.Website) {
-			err := h.Messanger.SendToUser(w.UserID, &ws.Msg{
-				Type:   ws.CommMsg,
-				UserID: w.UserID,
-				Message: map[string]interface{}{
-					"action":  "update:website",
-					"website": w,
-				},
-			})
-			if err != nil {
-				fmt.Println("Error sending update website message: ", err)
-			}
-		})
+		h.Analyzer.StartReporting()
 	}()
 
 	go func() {
@@ -54,7 +42,11 @@ func main() {
 			case <-ticker.C:
 				ids := h.Messanger.UsersOnline()
 				for _, id := range ids {
-					l, err := h.Analyzer.PendingListLen(id)
+					ll, err := h.Analyzer.ListLen(api.PendingList, id)
+					if err != nil {
+						fmt.Printf("Error reporting list len: %s", err)
+					}
+					tl, err := h.Analyzer.ListLen(api.TimeoutedList, id)
 					if err != nil {
 						fmt.Printf("Error reporting list len: %s", err)
 					}
@@ -63,7 +55,7 @@ func main() {
 						UserID: id,
 						Message: map[string]interface{}{
 							"action": "report:status",
-							"status": api.AnalyzeStatus{l},
+							"status": api.AnalyzeStatus{ll, tl},
 						},
 					})
 					if err != nil {

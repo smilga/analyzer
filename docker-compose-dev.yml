@@ -24,7 +24,7 @@ services:
     #     ports:
     #         - "3000:3000"
 
-    inspector:
+    inspect:
         build:
             context: ./puppeteer
             dockerfile: Dockerfile-dev
@@ -32,6 +32,26 @@ services:
             - ./puppeteer:/puppeteer
         depends_on:
             - redis
+        environment:
+            - TIMEOUT=30000
+            - RETRY=3
+            - CONCURRENCY=18
+            - READ_LIST=pending:lists
+        command: ["npm", "run", "start", "--prefix", "/puppeteer"]
+
+    inspect-slow:
+        build:
+            context: ./puppeteer
+            dockerfile: Dockerfile-dev
+        volumes:
+            - ./puppeteer:/puppeteer
+        depends_on:
+            - redis
+        environment:
+            - TIMEOUT=60000
+            - RETRY=3
+            - CONCURRENCY=4
+            - READ_LIST=timeouted:lists
         command: ["npm", "run", "start", "--prefix", "/puppeteer"]
 
     web:

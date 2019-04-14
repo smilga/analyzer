@@ -24,10 +24,26 @@ services:
     #     ports:
     #         - "3000:3000"
     #
-    inspector:
+    inspect:
         build: https://${GITHUB_ACCESS_TOKEN}:@github.com/smilga/analyzer.git#master:puppeteer
         depends_on:
             - redis
+        environment:
+            - TIMEOUT=30000
+            - RETRY=3
+            - CONCURRENCY=18
+            - READ_LIST=pending:lists
+        command: ["npm", "run", "start", "--prefix", "/puppeteer"]
+
+    inspect-slow:
+        build: https://${GITHUB_ACCESS_TOKEN}:@github.com/smilga/analyzer.git#master:puppeteer
+        depends_on:
+            - redis
+        environment:
+            - TIMEOUT=60000
+            - RETRY=3
+            - CONCURRENCY=4
+            - READ_LIST=timeouted:lists
         command: ["npm", "run", "start", "--prefix", "/puppeteer"]
 
     web:

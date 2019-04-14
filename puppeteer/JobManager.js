@@ -1,31 +1,14 @@
 const Redis = require('redis');
 const Pattern = require('./Pattern');
+const Lists = require('./Lists');
 
-const LISTS   = "pending:lists";
-const RESULTS_LIST = "inspect:results";
-
-class Lists {
-    constructor() {
-        this.lists = [];
-        this.index = 0;
-    }
-
-    setLists(lists = []) {
-        this.lists = lists.sort();
-    }
-
-    hasNext() {
-        return this.lists.length > 0;
-    }
-
-    next() {
-        if (this.index === this.lists.length) {
-            this.index = 0;
-        }
-
-        return this.lists[this.index++];
-    }
-}
+const READ_LIST = process.env.READ_LIST;
+const PENDING_LIST         = 'pending:websites:user:'
+const LISTS_LIST           = 'pending:lists'
+const TIMEOUTED_LIST       = 'timeouted:websites:user:'
+const TIMEOUTED_LISTS_LIST = 'timeouted:lists'
+const RESULTS_LIST         = 'inspect:results'
+const PATTERNS_LIST        = 'inspect:patterns'
 
 module.exports = class JobManager {
     constructor() {
@@ -54,7 +37,7 @@ module.exports = class JobManager {
     }
 
     updateLists() {
-        this.client.smembers(LISTS, (err, val) => {
+        this.client.smembers(READ_LIST, (err, val) => {
             if(err) {
                 console.log('Error updating lists')
                 return;
@@ -67,9 +50,23 @@ module.exports = class JobManager {
         this.client.lpush([RESULTS_LIST, JSON.stringify(results)]);
     }
 
+    storeTimeouted(website) {
+        if(website.retry) {
+            website.retry++;
+        } else {
+            website.retry = 1;
+        }
+
+        const list = TIMEOUTED_LIST + website.userId;
+
+        this.client.sadd(TIMEOUTED_LISTS_LIST, list);
+
+        this.client.lpush([list, JSON.stringify(website)]);
+    }
+
     getPatterns() {
         return new Promise((res, rej) => {
-            this.client.hgetall('inspect:patterns', function(err, obj){
+            this.client.hgetall(PATTERNS_LIST, function(err, obj){
                 if(err) {
                     return rej(err);
                 }
