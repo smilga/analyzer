@@ -31,7 +31,7 @@ services:
         environment:
             - TIMEOUT=30000
             - RETRY=3
-            - CONCURRENCY=18
+            - CONCURRENCY=22
             - READ_LIST=pending:lists
         command: ["npm", "run", "start", "--prefix", "/puppeteer"]
 
@@ -40,9 +40,9 @@ services:
         depends_on:
             - redis
         environment:
-            - TIMEOUT=60000
+            - TIMEOUT=120000
             - RETRY=3
-            - CONCURRENCY=4
+            - CONCURRENCY=6
             - READ_LIST=timeouted:lists
         command: ["npm", "run", "start", "--prefix", "/puppeteer"]
 

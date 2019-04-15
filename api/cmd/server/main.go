@@ -76,9 +76,18 @@ func main() {
 	router.GET("/api/patterns/:id", h.Pattern)
 	router.GET("/api/patterns/:id/delete", h.DeletePattern)
 
+	router.GET("/api/services", h.Services)
+	router.POST("/api/services", h.SaveService)
+	router.GET("/api/services/:id", h.Service)
+	router.GET("/api/services/:id/delete", h.DeleteService)
+
 	router.GET("/api/tags", h.Tags)
 	router.POST("/api/tags", h.SaveTag)
 	router.GET("/api/tags/:id", h.Tag)
+
+	router.GET("/api/features", h.Features)
+	router.POST("/api/features", h.SaveFeature)
+	router.GET("/api/features/:id", h.Feature)
 
 	router.GET("/api/filters", h.Filters)
 	router.POST("/api/filters", h.SaveFilter)
@@ -86,7 +95,7 @@ func main() {
 
 	router.GET("/api/websites", h.Websites)
 	router.GET("/api/websites/:id/report", h.Report)
-	router.POST("/api/websites/delete", h.DeleteWebsites)
+	router.GET("/api/websites/:id/delete", h.DeleteWebsites)
 	router.POST("/api/websites", h.SaveWebsite)
 	router.POST("/api/websites/import", h.ImportWebsites)
 
@@ -99,7 +108,7 @@ func main() {
 	router.GET("/api/ws", h.Upgrade)
 
 	router.PanicHandler = func(w netHTTP.ResponseWriter, r *netHTTP.Request, err interface{}) {
-		fmt.Printf("Error: %v, URL: %v %v \n", err, r.Method, r.URL)
+		fmt.Printf("Recovered from Error: %v, URL: %v %v \n", err, r.Method, r.URL)
 		w.WriteHeader(netHTTP.StatusInternalServerError)
 	}
 

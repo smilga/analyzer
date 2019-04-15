@@ -114,7 +114,6 @@ func (s *WebsiteStore) ByFilterID(filterIDs []api.FilterID, id api.UserID, p *ap
 		SELECT w.* FROM websites w
 		INNER JOIN matches m ON m.website_id = w.id
 		WHERE m.pattern_id IN (?)
-		AND m.deleted_at IS NULL
 		AND w.user_id = ?
 		AND w.url like ?
 		GROUP BY w.id
@@ -135,7 +134,6 @@ func (s *WebsiteStore) ByFilterID(filterIDs []api.FilterID, id api.UserID, p *ap
 		FROM websites w
 		INNER JOIN matches m ON m.website_id = w.id
 		WHERE m.pattern_id IN (?)
-		AND m.deleted_at IS NULL
 		AND w.user_id = ?`
 	countArgs := []interface{}{patternIDs, id}
 	if p.ShouldSearch() {
@@ -263,10 +261,8 @@ func (s *WebsiteStore) Delete(id api.WebsiteID) error {
 }
 
 func (s *WebsiteStore) storeMatches(id api.WebsiteID, matches []*api.Match) error {
-	// TODO use triggers to move historycal data to other tables
-	// move matches and reports to archived table
-
-	_, err := s.DB.Exec(`UPDATE matches SET deleted_at = NOW() WHERE website_id = ?`, id)
+	// NOTE there is trigger that moves those matches to matches_archive table
+	_, err := s.DB.Exec(`DELETE FROM matches WHERE website_id = ?`, id)
 	if err != nil {
 		return err
 	}
@@ -309,7 +305,6 @@ func (s *WebsiteStore) AddTags(websites []*api.Website) error {
 		INNER JOIN pattern_tags pt on pt.pattern_id = m.pattern_id
 		INNER JOIN tags t on t.id = pt.tag_id
 		WHERE w.id in (?)
-		AND m.deleted_at IS NULL;
 	`, websiteIDs)
 	if err != nil {
 		return err

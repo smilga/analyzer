@@ -50,7 +50,7 @@ services:
         environment:
             - TIMEOUT=60000
             - RETRY=3
-            - CONCURRENCY=4
+            - CONCURRENCY=6
             - READ_LIST=timeouted:lists
         command: ["npm", "run", "start", "--prefix", "/puppeteer"]
 

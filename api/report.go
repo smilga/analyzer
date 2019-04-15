@@ -21,5 +21,4 @@ type Report struct {
 	HTMLCheckIn     string     `db:"html_check_in"`
 	TotalIn         string     `db:"total_in"`
 	CreatedAt       *time.Time `db:"created_at"`
-	DeletedAt       *time.Time `db:"deleted_at"`
 }

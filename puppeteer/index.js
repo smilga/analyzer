@@ -16,10 +16,8 @@ let manager = new JobManager;
 
     cluster.on('taskerror', async (err, website) => {
         if(err.message.includes(ERR.TIMEOUT) && website.retry !== parseInt(process.env.RETRY)) {
-            console.log("TIMEOUT ERR: ", website.url)
             manager.storeTimeouted(website);
         } else {
-            console.log('OTHER ERROR: ', website.url)
             let patterns = await manager.getPatterns();
             let results = new Results({
                 time: new Time,

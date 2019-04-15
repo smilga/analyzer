@@ -18,6 +18,8 @@ type Handler struct {
 	UserStorage    api.UserStorage
 	PatternStorage api.PatternStorage
 	TagStorage     api.TagStorage
+	FeatureStorage api.FeatureStorage
+	ServiceStorage api.ServiceStorage
 	FilterStorage  api.FilterStorage
 	ReportStorage  api.ReportStorage
 	Analyzer       *api.Analyzer
@@ -41,6 +43,8 @@ func NewHandler(db *sqlx.DB) *Handler {
 	ts := mysql.NewTagStore(db)
 	rs := mysql.NewReportStore(db)
 	fs := mysql.NewFilterStore(db)
+	xs := mysql.NewFeatureStore(db)
+	ss := mysql.NewServiceStore(db)
 	pcache := cache.NewPatternCache(ps)
 
 	return &Handler{
@@ -49,6 +53,8 @@ func NewHandler(db *sqlx.DB) *Handler {
 		UserStorage:    us,
 		PatternStorage: pcache,
 		TagStorage:     ts,
+		FeatureStorage: xs,
+		ServiceStorage: ss,
 		FilterStorage:  fs,
 		ReportStorage:  rs,
 		Analyzer: &api.Analyzer{

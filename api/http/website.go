@@ -123,19 +123,17 @@ func (h *Handler) ImportWebsites(w http.ResponseWriter, r *http.Request, _ httpr
 }
 
 func (h *Handler) DeleteWebsites(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	ids := []api.WebsiteID{}
-	err := json.NewDecoder(r.Body).Decode(&ids)
+	ids := ps.ByName("id")
+	id, err := strconv.Atoi(ids)
 	if err != nil {
 		h.responseErr(w, err)
 		return
 	}
 
-	for _, id := range ids {
-		err = h.WebsiteStorage.Delete(id)
-		if err != nil {
-			h.responseErr(w, err)
-			return
-		}
+	err = h.WebsiteStorage.Delete(api.WebsiteID(id))
+	if err != nil {
+		h.responseErr(w, err)
+		return
 	}
 
 	h.responseJSON(w, "ok")

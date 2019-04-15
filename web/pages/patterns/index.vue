@@ -1,7 +1,7 @@
 <template>
   <div class="patterns">
     <nuxt-link to="/patterns/create">
-      <el-button icon="el-icon-circle-plus" @click="">
+      <el-button icon="el-icon-circle-plus">
         New Pattern
       </el-button>
     </nuxt-link>

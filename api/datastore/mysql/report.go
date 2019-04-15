@@ -17,8 +17,8 @@ func (s *ReportStore) Save(r *api.Report) error {
 		r.CreatedAt = &now
 	}
 
-	// TODO use triggers to move old reports to archive table
-	_, err := s.DB.Exec(`UPDATE reports SET deleted_at=NOW() where website_id=?`, r.WebsiteID)
+	// NOTE there is trigger that moves deleted reports to reports_archive table
+	_, err := s.DB.Exec(`DELETE from reports where website_id=?`, r.WebsiteID)
 	if err != nil {
 		return err
 	}
@@ -51,8 +51,7 @@ func (s *ReportStore) ByWebsite(id api.WebsiteID) (*api.Report, error) {
 		SELECT r.*, w.url FROM reports r
 		LEFT JOIN websites w on w.id = r.website_id
 		WHERE r.website_id = ?
-		AND r.deleted_at IS NULL
-	`, id).Scan(&r.ID, &r.UserID, &r.WebsiteID, &r.StartedIn, &r.LoadedIn, &r.ResourceCheckIn, &r.HTMLCheckIn, &r.TotalIn, &r.CreatedAt, &r.DeletedAt,
+	`, id).Scan(&r.ID, &r.UserID, &r.WebsiteID, &r.StartedIn, &r.LoadedIn, &r.ResourceCheckIn, &r.HTMLCheckIn, &r.TotalIn, &r.CreatedAt,
 		&r.WebsiteURL)
 	if err != nil {
 		return nil, err
@@ -69,7 +68,7 @@ func (s *ReportStore) ByWebsite(id api.WebsiteID) (*api.Report, error) {
 	patternIDs := []api.PatternID{}
 	for rows.Next() {
 		m := &api.Match{}
-		err := rows.Scan(&m.ID, &m.PatternID, &m.WebsiteID, &m.ReportID, &m.Value, &m.CreatedAt, &m.DeletedAt)
+		err := rows.Scan(&m.ID, &m.PatternID, &m.WebsiteID, &m.ReportID, &m.Value, &m.CreatedAt)
 		if err != nil {
 			return nil, err
 		}

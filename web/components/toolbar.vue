@@ -14,6 +14,13 @@
         </el-menu-item>
       </nuxt-link>
 
+      <nuxt-link to="/services">
+        <el-menu-item index="services">
+          <i class="el-icon-tickets" />
+          <span>Services</span>
+        </el-menu-item>
+      </nuxt-link>
+
       <nuxt-link to="/patterns">
         <el-menu-item index="patterns">
           <i class="el-icon-search" />
@@ -27,9 +34,15 @@
           <span>Filters</span>
         </el-menu-item>
       </nuxt-link>
+
+      <nuxt-link to="/stats">
+        <el-menu-item index="stats">
+          <i class="el-icon-info" />
+          <span>Stats</span>
+        </el-menu-item>
+      </nuxt-link>
+
       <div class="right">
-        <span class="stats">Queue: {{ queued }} websites</span>
-        <span class="stats">Timeouted: {{ timeouted }} websites</span>
         <template v-if="user">
           <el-dropdown class="user-dropdown">
             <div class="el-dropdown-link">

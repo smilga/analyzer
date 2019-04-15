@@ -36,17 +36,13 @@
           Inspect new
         </el-button>
         <el-button
-          :disabled="selectedWebsites.length === 0"
+          type="success"
+          plain
           class="rescan"
-          icon="el-icon-refresh"
-          @click="inspectSelected"
+          icon="el-icon-download"
+          @click="exportWebsites"
         >
-          <template v-if="selectedWebsites.length === 0">
-            Select to inspect
-          </template>
-          <template v-else>
-            Inspect {{ selectedWebsites.length }}
-          </template>
+          Export filtered
         </el-button>
       </span>
     </div>
@@ -68,36 +64,12 @@
           :value="item.id"
         />
       </el-select>
-      <!-- <el-button -->
-      <!--   type="danger" -->
-      <!--   plain -->
-      <!--   style="margin-right: 4px;" -->
-      <!--   :disabled="selectedWebsites.length === 0" -->
-      <!--   icon="el-icon-delete" -->
-      <!--   @click="deleteTarget = selectedWebsites.slice()" -->
-      <!-- > -->
-      <!--   <template v-if="selectedWebsites.length === 0"> -->
-      <!--     Select to delete -->
-      <!--   </template> -->
-      <!--   <template v-else> -->
-      <!--     Delete {{ selectedWebsites.length }} -->
-      <!--   </template> -->
-      <!-- </el-button> -->
       <el-input v-model="pagination.search" class="search-input" placeholder="Search" />
       <el-button
         type="primary"
         icon="el-icon-search"
         @click="fetch"
       />
-      <!-- <el-button -->
-      <!--   type="success" -->
-      <!--   plain -->
-      <!--   class="rescan" -->
-      <!--   icon="el-icon-download" -->
-      <!--   @click="exportWebsites" -->
-      <!-- > -->
-      <!--   Export filtered -->
-      <!-- </el-button> -->
     </div>
     <div class="website-list">
       <el-table
@@ -105,21 +77,7 @@
         class="website-table"
         :data="websites"
         style="width: 100%"
-        @selection-change="selectedWebsites = arguments[0]"
       >
-        <el-table-column
-          type="selection"
-          width="35"
-        />
-        <el-table-column
-          width="25"
-        >
-          <template slot-scope="scope">
-            <span>
-              <i v-if="scope.row.loading" class="el-icon-loading" />
-            </span>
-          </template>
-        </el-table-column>
         <el-table-column
           prop="url"
           label="URL"
@@ -150,7 +108,7 @@
         </el-table-column>
         <el-table-column
           prop=""
-          width="40"
+          width="90"
           label=""
         >
           <template slot-scope="scope">
@@ -158,6 +116,12 @@
               <span class="icon-btn">
                 <i class="el-icon-search" />
               </span>
+            </nuxt-link>
+            <span class="icon-btn" @click="inspect(scope.row)">
+              <i class="el-icon-refresh" />
+            </span>
+            <nuxt-link class="icon-btn" to="#" @click.native="deleteTarget = scope.row">
+              <i class="el-icon-delete" />
             </nuxt-link>
           </template>
         </el-table-column>
@@ -237,6 +201,23 @@ export default {
             .then(res => this.filters = res.data.map(p => new Filter(p)));
     },
     methods: {
+        inspect(website) {
+            this.$axios.get(`/api/inspect/websites/${website.id}`)
+                .then((res) => {
+                    this.$notify.success({
+                        title: 'Queued',
+                        message: 'Website will be inspected',
+                        position: 'bottom-right'
+                    });
+                })
+                .catch((e) => {
+                    this.$notify.error({
+                        title: 'Error',
+                        message: e.response.data.error,
+                        position: 'bottom-right'
+                    });
+                });
+        },
         exportWebsites() {
             return this.$axios.post(`/api/inspect/export?f=${this.selected.join(',')}`)
                 .then((res) => {
@@ -270,20 +251,8 @@ export default {
                 });
         },
         deleteSelected() {
-            const ids = this.selectedWebsites.map(w => w.id);
-            this.$store.dispatch('websites/delete', ids)
-                .then(() => {
-                    this.deleteTarget = null;
-                    this.selectedWebsites = [];
-                });
-        },
-        inspectSelected() {
-            this.selectedWebsites.forEach((w) => {
-                this.$store.commit('websites/SET_LOADING', { id: w.id, status: true });
-            });
-            const ids = this.selectedWebsites.map(w => w.id);
-            this.$axios.post('/api/inspect/websites', ids).then(() => {
-            });
+            this.$store.dispatch('websites/delete', this.deleteTarget.id)
+                .then(() => this.deleteTarget = null);
         },
         fetch() {
             this.fetching = true;
@@ -303,18 +272,6 @@ export default {
                     this.$store.commit('websites/ADD', [w]);
                     this.websiteURL = '';
                     this.dialog.addWebsite = false;
-                });
-        },
-        inspect(website) {
-            this.$store.commit('websites/SET_LOADING', { id: website.id, status: true });
-            this.$axios.get(`/api/inspect/websites/${website.id}`)
-                // .then(res => this.$store.commit('websites/UPDATE', new Website(res.data)))
-                .catch((e) => {
-                    this.$notify.error({
-                        title: 'Error',
-                        message: e.response.data.error,
-                        position: 'bottom-right'
-                    });
                 });
         }
     }
