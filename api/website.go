@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/url"
+	"strconv"
 	"time"
 )
 
@@ -12,6 +13,10 @@ var (
 )
 
 type WebsiteID int64
+
+func (w WebsiteID) String() string {
+	return strconv.Itoa(int(w))
+}
 
 type WebsiteStorage interface {
 	ByUser(UserID, *Pagination) ([]*Website, int, error)

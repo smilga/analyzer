@@ -1,19 +1,17 @@
 package mysql
 
 import (
-	"time"
-
-	"github.com/jmoiron/sqlx"
+	"github.com/jinzhu/gorm"
 	"github.com/smilga/analyzer/api"
 )
 
 type FeatureStore struct {
-	DB *sqlx.DB
+	DB *gorm.DB
 }
 
 func (s *FeatureStore) All() ([]*api.Feature, error) {
 	fs := []*api.Feature{}
-	err := s.DB.Select(&fs, "SELECT * FROM features WHERE deleted_at IS NULL")
+	err := s.DB.Find(&fs).Error
 	if err != nil {
 		return nil, err
 	}
@@ -21,41 +19,19 @@ func (s *FeatureStore) All() ([]*api.Feature, error) {
 }
 
 func (s *FeatureStore) Get(id api.FeatureID) (*api.Feature, error) {
-	t := &api.Feature{}
+	f := &api.Feature{}
 
-	err := s.DB.Get(t, "SELECT * FROM features where id=? AND deleted_at IS NULL", id)
+	err := s.DB.First(&f, id).Error
 	if err != nil {
 		return nil, err
 	}
-	return t, nil
+	return f, nil
 }
 
-func (s *FeatureStore) Save(t *api.Feature) error {
-	now := time.Now()
-	if t.ID == 0 {
-		t.CreatedAt = &now
-	}
-
-	res, err := s.DB.Exec(`
-		INSERT INTO features (id, value, created_at, deleted_at)
-		VALUES (?, ?, ?, ?)
-	`, t.ID, t.Value, t.CreatedAt, t.DeletedAt)
-
-	if err != nil {
-		return err
-	}
-
-	if t.ID == 0 {
-		id, err := res.LastInsertId()
-		if err != nil {
-			return err
-		}
-		t.ID = api.FeatureID(id)
-	}
-
-	return nil
+func (s *FeatureStore) Save(f *api.Feature) error {
+	return s.DB.Create(f).Error
 }
 
-func NewFeatureStore(DB *sqlx.DB) *FeatureStore {
+func NewFeatureStore(DB *gorm.DB) *FeatureStore {
 	return &FeatureStore{DB}
 }

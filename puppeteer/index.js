@@ -1,10 +1,10 @@
 const { Cluster } = require('puppeteer-cluster');
-const Analyzer = require('./Analyzer');
 const Results = require('./Results');
 const Time = require('./Time');
 const config = require('./config');
 const JobManager = require('./JobManager');
 const ERR = require('./Errors');
+const Scraper = require('./Scraper');
 
 let cluster = {};
 let manager = new JobManager;
@@ -15,65 +15,57 @@ let manager = new JobManager;
     start(cluster);
 
     cluster.on('taskerror', async (err, website) => {
-        if(err.message.includes(ERR.TIMEOUT) && website.retry !== parseInt(process.env.RETRY)) {
-            manager.storeTimeouted(website);
+        if(!err.message.includes(ERR.NOT_RESOLVED) && website.retry !== parseInt(process.env.RETRY)) {
+            manager.storePending(website);
         } else {
-            let patterns = await manager.getPatterns();
             let results = new Results({
-                time: new Time,
-                matches: (new Analyzer(patterns)).getErrorMatch(err.message),
                 websiteId: website.id,
-                userId: website.userId
+                userId: website.userId,
+                error: err
             });
             manager.storeResults(results);
         }
     });
 
     await cluster.task(async ({ page, data: website }) => {
-        const patterns = await manager.getPatterns();
 
-        const analyzer = new Analyzer(patterns);
+        const scraper = new Scraper(page);
 
-        const requestIntercept = req => {
-            if (req.resourceType() === 'image') {
-                analyzer.resourceURLs.push(req.url());
-                req.abort();
-            } else if (req.resourceType() === 'script' || req.resourceType() === 'xhr') {
-                analyzer.resourceURLs.push(req.url());
+        const intercept = req => {
+            if (req.resourceType() === 'script') {
+                scraper.addScript(req.url());
                 req.continue();
+            } else if (req.resourceType() === 'image') {
+                req.abort();
             } else {
                 req.continue();
             }
         }
 
         const time = new Time()
-        let matches = [];
 
-        time.setTime('started');
+        // Page settings
         await page.setDefaultTimeout(config.TIMEOUT);
         await page.setUserAgent(config.UA);
         await page.setRequestInterception(true);
-        page.on('request', requestIntercept);
+        page.on('request', intercept);
 
-        await page.goto(website.url, config.goto);
-
+        const response = await page.goto(website.url, config.goto);
         time.setTime('loaded');
-        matches = matches.concat(analyzer.analyzeSystem());
-        matches = matches.concat(analyzer.analyzeResources());
+        scraper.setHeaders(response.headers());
 
-        time.setTime('resourceCheck');
-        matches = matches.concat(await analyzer.analyzeHTML(page));
-        time.setTime('htmlCheck');
+        await scraper.run();
+
+        time.setTime('processed');
         time.setTime('total');
 
         let results = new Results({
             time: time,
-            matches,
             websiteId: website.id,
-            userId: website.userId
+            userId: website.userId,
+            ...scraper.results(),
         });
 
-        //console.log(JSON.stringify(results));
         manager.storeResults(results);
     });
 

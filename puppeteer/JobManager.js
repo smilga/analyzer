@@ -47,20 +47,19 @@ module.exports = class JobManager {
     }
 
     storeResults(results) {
-        this.client.lpush([RESULTS_LIST, JSON.stringify(results)]);
+        let res = JSON.stringify(results)
+        this.client.lpush([RESULTS_LIST, res]);
     }
 
-    storeTimeouted(website) {
+    storePending(website) {
         if(website.retry) {
             website.retry++;
         } else {
             website.retry = 1;
         }
 
-        const list = TIMEOUTED_LIST + website.userId;
-
-        this.client.sadd(TIMEOUTED_LISTS_LIST, list);
-
+        const list = PENDING_LIST + website.userId;
+        this.client.sadd(LISTS_LIST, list);
         this.client.lpush([list, JSON.stringify(website)]);
     }
 

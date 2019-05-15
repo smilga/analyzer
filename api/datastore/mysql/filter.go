@@ -1,15 +1,15 @@
 package mysql
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/smilga/analyzer/api"
 )
 
 type FilterStore struct {
-	DB *sqlx.DB
+	DB *sql.DB
 }
 
 func (s *FilterStore) Get(id api.FilterID) (*api.Filter, error) {
@@ -151,6 +151,6 @@ func (s *FilterStore) updateFilterTags(id api.FilterID, tags []*api.Tag) error {
 	return err
 }
 
-func NewFilterStore(DB *sqlx.DB) *FilterStore {
+func NewFilterStore(DB *sql.DB) *FilterStore {
 	return &FilterStore{DB}
 }

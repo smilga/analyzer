@@ -1,14 +1,15 @@
 package mysql
 
 import (
+	"database/sql"
+	"fmt"
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/smilga/analyzer/api"
 )
 
 type ReportStore struct {
-	DB *sqlx.DB
+	DB *sql.DB
 }
 
 func (s *ReportStore) Save(r *api.Report) error {
@@ -80,16 +81,22 @@ func (s *ReportStore) ByWebsite(id api.WebsiteID) (*api.Report, error) {
 		return r, nil
 	}
 
-	query, args, err := sqlx.In("SELECT * FROM patterns WHERE id IN (?);", patternIDs)
+	rows, err = s.DB.Query(fmt.Sprintf("SELECT * FROM patterns WHERE id IN (%s);"), patternIDs)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	patterns := []*api.Pattern{}
-	err = s.DB.Select(&patterns, query, args...)
-	if err != nil {
-		return nil, err
+	for rows.Next() {
+		var p api.Pattern
+		err := rows.Scan(&p.ID, &p.Type, &p.Value, &p.Description, &p.CreatedAt, &p.UpdatedAt, &p.DeletedAt)
+		if err != nil {
+			return nil, err
+		}
+		patterns = append(patterns, &p)
 	}
+
 	patternMap := make(map[api.PatternID]*api.Pattern, len(patterns))
 	for _, p := range patterns {
 		patternMap[p.ID] = p
@@ -106,6 +113,6 @@ func (s *ReportStore) ByWebsite(id api.WebsiteID) (*api.Report, error) {
 	return r, nil
 }
 
-func NewReportStore(DB *sqlx.DB) *ReportStore {
+func NewReportStore(DB *sql.DB) *ReportStore {
 	return &ReportStore{DB}
 }

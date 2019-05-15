@@ -2,40 +2,20 @@ package mysql
 
 import (
 	"fmt"
-	"time"
 
+	"github.com/jinzhu/gorm"
 	"github.com/jmoiron/sqlx"
 	"github.com/smilga/analyzer/api"
 )
 
 type ServiceStore struct {
-	DB *sqlx.DB
+	DB *gorm.DB
 }
 
 func (s *ServiceStore) Save(p *api.Service) error {
-	now := time.Now()
-	if p.ID == 0 {
-		p.CreatedAt = &now
-	} else {
-		p.UpdatedAt = &now
-	}
-
-	res, err := s.DB.Exec(`
-		INSERT INTO services
-		(id, name, created_at, updated_at, deleted_at)
-		VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE
-		name=VALUES(name), updated_at=VALUES(updated_at)
-	`, p.ID, p.Name, p.CreatedAt, p.UpdatedAt, p.DeletedAt)
+	err := s.DB.Create(p).Error
 	if err != nil {
 		return err
-	}
-
-	if p.ID == 0 {
-		id, err := res.LastInsertId()
-		if err != nil {
-			return err
-		}
-		p.ID = api.ServiceID(id)
 	}
 
 	err = s.updateServiceFeatures(p.ID, p.Features)
@@ -48,7 +28,7 @@ func (s *ServiceStore) Save(p *api.Service) error {
 
 func (s *ServiceStore) Get(id api.ServiceID) (*api.Service, error) {
 	p := &api.Service{}
-	rows, err := s.DB.Query(`
+	rows, err := s.DB.DB().Query(`
 		SELECT s.*, f.* FROM services s
 		LEFT JOIN service_features sf on sf.service_id = s.id
 		LEFT JOIN features f on sf.feature_id = f.id
@@ -79,44 +59,34 @@ func (s *ServiceStore) Get(id api.ServiceID) (*api.Service, error) {
 }
 
 func (s *ServiceStore) All(p *api.Pagination) ([]*api.Service, int, error) {
-	ws := []*api.Service{}
+	ss := []*api.Service{}
 	var total int
 
-	err := s.DB.Select(&ws, `
-		SELECT * FROM services
-		WHERE deleted_at IS NULL
-		AND name like ?
-		LIMIT ?
-		OFFSET ?
-		`, p.Search(), p.Limit(), p.Offset())
+	err := s.DB.Limit(p.Limit()).Offset(p.Offset()).Find(&ss).Error
 	if err != nil {
 		return nil, total, err
 	}
 
-	err = s.DB.Get(&total, `
-		SELECT count(*) FROM services
-		WHERE deleted_at IS NULL
-		AND name like ?
-		`, p.Search())
+	err = s.DB.Model(&api.Service{}).Count(&total).Error
 	if err != nil {
 		return nil, total, err
 	}
 
 	if !p.NoLimit() {
-		err := s.AddFeatures(ws)
+		err := s.AddFeatures(ss)
 		if err != nil {
 			return nil, total, err
 		}
 	}
 
-	return ws, total, nil
+	return ss, total, nil
 }
 
 func (s *ServiceStore) ByFeatures(featureIDs []api.FeatureID, p *api.Pagination) ([]*api.Service, int, error) {
 	ws := []*api.Service{}
 	var total int
 
-	query, args, err := sqlx.In(`
+	rows, err := s.DB.DB().Query(fmt.Sprintf(`
 		SELECT * FROM services
 		WHERE id IN (
 			SELECT service_id FROM service_features
@@ -127,29 +97,32 @@ func (s *ServiceStore) ByFeatures(featureIDs []api.FeatureID, p *api.Pagination)
 		AND name like ?
 		LIMIT ?
 		OFFSET ?
-	`, featureIDs, p.Search(), p.Limit(), p.Offset())
-	if err != nil {
-		return nil, total, err
-	}
-	err = s.DB.Select(&ws, query, args...)
+	`, featureIDs), p.Search(), p.Limit(), p.Offset())
 	if err != nil {
 		return nil, total, err
 	}
 
-	query, args, err = sqlx.In(`
+	defer rows.Close()
+
+	for rows.Next() {
+		var s api.Service
+		err := rows.Scan(&s.ID, &s.Name, &s.CreatedAt, &s.UpdatedAt, &s.DeletedAt)
+		if err != nil {
+			return nil, total, err
+		}
+		ws = append(ws, &s)
+	}
+
+	err = s.DB.DB().QueryRow(fmt.Sprintf(`
 		SELECT count(*) FROM services
 		WHERE id IN (
 			SELECT service_id FROM service_features
-			WHERE feature_id in (?)
+			WHERE feature_id in (%s)
 			GROUP BY id
 		)
 		AND deleted_at IS NULL
 		AND name like ?
-	`, featureIDs, p.Search())
-	if err != nil {
-		return nil, total, err
-	}
-	err = s.DB.Get(&total, query, args...)
+	`, featureIDs), p.Search()).Scan(&total)
 	if err != nil {
 		return nil, total, err
 	}
@@ -170,12 +143,12 @@ func (s *ServiceStore) Delete(id api.ServiceID) error {
 	if err != nil {
 		return err
 	}
-	_, err = s.DB.Exec(`UPDATE services SET deleted_at=NOW() where id=?`, id)
+	_, err = s.DB.DB().Exec(`UPDATE services SET deleted_at=NOW() where id=?`, id)
 	return err
 }
 
 func (s *ServiceStore) updateServiceFeatures(id api.ServiceID, features []*api.Feature) error {
-	_, err := s.DB.Exec(`DELETE FROM service_features WHERE service_id = ?`, id)
+	_, err := s.DB.DB().Exec(`DELETE FROM service_features WHERE service_id = ?`, id)
 	if err != nil {
 		return err
 	}
@@ -194,7 +167,7 @@ func (s *ServiceStore) updateServiceFeatures(id api.ServiceID, features []*api.F
 		featureIDs[i] = t.ID
 	}
 
-	_, err = s.DB.Exec(`INSERT INTO service_features (service_id, feature_id) VALUES `+bindVars, featureIDs...)
+	_, err = s.DB.DB().Exec(`INSERT INTO service_features (service_id, feature_id) VALUES `+bindVars, featureIDs...)
 	return err
 }
 
@@ -222,7 +195,7 @@ func (s *ServiceStore) AddFeatures(services []*api.Service) error {
 		return err
 	}
 
-	rows, err := s.DB.Query(query, args...)
+	rows, err := s.DB.DB().Query(query, args...)
 	if err != nil {
 		return err
 	}
@@ -246,6 +219,6 @@ func (s *ServiceStore) AddFeatures(services []*api.Service) error {
 	return nil
 }
 
-func NewServiceStore(DB *sqlx.DB) *ServiceStore {
+func NewServiceStore(DB *gorm.DB) *ServiceStore {
 	return &ServiceStore{DB}
 }

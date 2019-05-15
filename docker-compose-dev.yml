@@ -35,27 +35,11 @@ services:
         environment:
             - TIMEOUT=30000
             - RETRY=3
-            - CONCURRENCY=18
+            - CONCURRENCY=12
             - READ_LIST=pending:lists
         command: ["npm", "run", "start", "--prefix", "/puppeteer"]
 
-    inspect-slow:
-        build:
-            context: ./puppeteer
-            dockerfile: Dockerfile-dev
-        volumes:
-            - ./puppeteer:/puppeteer
-        depends_on:
-            - redis
-        environment:
-            - TIMEOUT=60000
-            - RETRY=3
-            - CONCURRENCY=6
-            - READ_LIST=timeouted:lists
-        command: ["npm", "run", "start", "--prefix", "/puppeteer"]
-
     web:
-        image: web-dev
         build:
             context: ./web
             dockerfile: Dockerfile-dev
@@ -67,7 +51,6 @@ services:
         command: sh -c "npm rebuild > /dev/null && API_PORT=${API_PORT} npm run dev"
 
     api:
-        image: api-dev
         build:
             context: ./api
             dockerfile: Dockerfile-dev

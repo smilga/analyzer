@@ -2,38 +2,55 @@ package mysql
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/jinzhu/gorm"
 	"github.com/smilga/analyzer/api"
 )
 
 type WebsiteStore struct {
-	DB *sqlx.DB
+	DB *gorm.DB
+}
+
+func (s *WebsiteStore) Where(id api.UserID, field string, value interface{}) ([]*api.Website, int, error) {
+	ws := []*api.Website{}
+	var total int
+
+	err := s.DB.Where("user_id", id).Where(field, value).Find(&ws).Error
+	if err != nil {
+		return nil, total, err
+	}
+
+	err = s.DB.Where("user_id", id).Where(field, value).Count(&total).Error
+	if err != nil {
+		return nil, total, err
+	}
+
+	err = s.AddTags(ws)
+	if err != nil {
+		return nil, total, err
+	}
+
+	return ws, total, nil
 }
 
 func (s *WebsiteStore) ByUser(id api.UserID, p *api.Pagination) ([]*api.Website, int, error) {
 	ws := []*api.Website{}
 	var total int
 
-	err := s.DB.Select(&ws, `
-		SELECT * FROM websites
-		WHERE user_id=?
-		AND deleted_at IS NULL
-		AND url like ?
-		LIMIT ?
-		OFFSET ?
-		`, id, p.Search(), p.Limit(), p.Offset())
+	q := s.DB.Where("user_id = ?", id)
+
+	if p.ShouldSearch() {
+		q.Where(fmt.Sprintf("url LIKE ?", "%%%s%%"), p.Search())
+	}
+
+	err := q.Limit(p.Limit()).Offset(p.Offset()).Find(&ws).Error
 	if err != nil {
 		return nil, total, err
 	}
 
-	err = s.DB.Get(&total, `
-		SELECT count(*) FROM websites
-		WHERE user_id=?
-		AND deleted_at IS NULL
-		AND url like ?
-		`, id, p.Search())
+	err = s.DB.Model(&api.Website{}).Where("user_id = ?", id).Count(&total).Error
 	if err != nil {
 		return nil, total, err
 	}
@@ -48,40 +65,6 @@ func (s *WebsiteStore) ByUser(id api.UserID, p *api.Pagination) ([]*api.Website,
 	return ws, total, nil
 }
 
-func (s *WebsiteStore) Where(id api.UserID, field string, value interface{}) ([]*api.Website, int, error) {
-	ws := []*api.Website{}
-	var total int
-
-	var query string
-	if value == "NULL" {
-		query = fmt.Sprintf("%s IS NULL", field)
-	} else {
-		query = fmt.Sprintf("%s = %v", field, value)
-	}
-
-	err := s.DB.Select(&ws, fmt.Sprintf(`
-		SELECT * FROM websites
-		WHERE user_id=?
-		AND deleted_at IS NULL
-		AND %s
-		`, query), id)
-	if err != nil {
-		return nil, total, err
-	}
-
-	err = s.DB.Get(&total, fmt.Sprintf(`
-		SELECT count(*) FROM websites
-		WHERE user_id=?
-		AND deleted_at IS NULL
-		AND %s
-		`, query), id)
-	if err != nil {
-		return nil, total, err
-	}
-
-	return ws, total, nil
-}
-
 func (s *WebsiteStore) ByFilterID(filterIDs []api.FilterID, id api.UserID, p *api.Pagination) ([]*api.Website, int, error) {
 	ws := []*api.Website{}
 	var total int
@@ -91,61 +74,72 @@ func (s *WebsiteStore) ByFilterID(filterIDs []api.FilterID, id api.UserID, p *ap
 	}
 
 	tagIDs := []api.TagID{}
-	query, args, err := sqlx.In("SELECT tag_id FROM filter_tags WHERE filter_id IN (?);", filterIDs)
+	rows, err := s.DB.DB().Query(fmt.Sprintf("SELECT tag_id FROM filter_tags WHERE filter_id IN (%s);"), filterIDs)
 	if err != nil {
 		return nil, total, err
 	}
-	err = s.DB.Select(&tagIDs, query, args...)
-	if err != nil {
-		return nil, total, err
+	defer rows.Close()
+	for rows.Next() {
+		var id api.TagID
+		err := rows.Scan(&id)
+		if err != nil {
+			return nil, total, err
+		}
+		tagIDs = append(tagIDs, id)
 	}
 
 	patternIDs := []api.PatternID{}
-	query, args, err = sqlx.In("SELECT pattern_id FROM pattern_tags WHERE tag_id IN (?);", tagIDs)
+	rows, err = s.DB.DB().Query(fmt.Sprintf("SELECT pattern_id FROM pattern_tags WHERE tag_id IN (%s);", tagIDs))
 	if err != nil {
 		return nil, total, err
 	}
-	err = s.DB.Select(&patternIDs, query, args...)
-	if err != nil {
-		return nil, total, err
+	defer rows.Close()
+	for rows.Next() {
+		var id api.PatternID
+		err := rows.Scan(&id)
+		if err != nil {
+			return nil, total, err
+		}
+		patternIDs = append(patternIDs, id)
 	}
 
-	query, args, err = sqlx.In(`
+	rows, err = s.DB.DB().Query(fmt.Sprintf(`
 		SELECT w.* FROM websites w
 		INNER JOIN matches m ON m.website_id = w.id
-		WHERE m.pattern_id IN (?)
+		WHERE m.pattern_id IN (%s)
 		AND w.user_id = ?
 		AND w.url like ?
 		GROUP BY w.id
 		LIMIT ?
 		OFFSET ?
-	`, patternIDs, id, p.Search(), p.Limit(), p.Offset())
+	`, patternIDs), id, p.Search(), p.Limit(), p.Offset())
 	if err != nil {
 		return nil, total, err
 	}
-	err = s.DB.Select(&ws, query, args...)
-	if err != nil {
-		return nil, total, err
+	defer rows.Close()
+	for rows.Next() {
+		var w api.Website
+		err := rows.Scan(&w.ID, &w.UserID, &w.URL, &w.InspectedAt, &w.CreatedAt, &w.DeletedAt)
+		if err != nil {
+			return nil, total, err
+		}
+		ws = append(ws, &w)
 	}
 
 	// Add searh dynamicly because of count slow down with "like query"
-	countQ := `
+	countQ := fmt.Sprintf(`
 		SELECT COUNT(DISTINCT w.id)
 		FROM websites w
 		INNER JOIN matches m ON m.website_id = w.id
-		WHERE m.pattern_id IN (?)
-		AND w.user_id = ?`
-	countArgs := []interface{}{patternIDs, id}
+		WHERE m.pattern_id IN (%s)
+		AND w.user_id = ?`, patternIDs)
+	countArgs := []interface{}{id}
 	if p.ShouldSearch() {
 		countQ = fmt.Sprintf("%s AND url like ?", countQ)
 		countArgs = append(countArgs, p.Search())
 	}
 
-	query, args, err = sqlx.In(countQ, countArgs...)
-	if err != nil {
-		return nil, total, err
-	}
-	err = s.DB.Get(&total, query, args...)
+	err = s.DB.DB().QueryRow(countQ, countArgs...).Scan(&total)
 	if err != nil {
 		return nil, total, err
 	}
@@ -163,16 +157,16 @@ func (s *WebsiteStore) ByFilterID(filterIDs []api.FilterID, id api.UserID, p *ap
 func (s *WebsiteStore) Get(id api.WebsiteID) (*api.Website, error) {
 	w := &api.Website{}
 
-	err := s.DB.Get(w, "SELECT * FROM websites where id=? AND deleted_at IS NULL", id)
+	err := s.DB.First(&w, int(id)).Error
 	if err != nil {
 		return nil, err
 	}
 
-	ws := []*api.Website{w}
-	err = s.AddTags(ws)
-	if err != nil {
-		return nil, err
-	}
+	// ws := []*api.Website{w}
+	// err = s.AddTags(ws)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return w, nil
 }
@@ -183,7 +177,7 @@ func (s *WebsiteStore) Save(w *api.Website) error {
 		w.CreatedAt = &now
 	}
 
-	res, err := s.DB.Exec(`
+	res, err := s.DB.DB().Exec(`
 		INSERT INTO websites
 		(id, user_id, url, inspected_at, created_at, deleted_at)
 		VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE
@@ -245,7 +239,7 @@ func (s *WebsiteStore) saveBatch(websites []*api.Website) error {
 		params = append(params, w.UserID, w.URL, w.CreatedAt)
 	}
 
-	_, err := s.DB.Exec(q, params...)
+	_, err := s.DB.DB().Exec(q, params...)
 	if err != nil {
 		return err
 	}
@@ -256,13 +250,13 @@ func (s *WebsiteStore) saveBatch(websites []*api.Website) error {
 func (s *WebsiteStore) Delete(id api.WebsiteID) error {
 	// TODO validate id website belongs to user
 	// pass context down with user id and then check
-	_, err := s.DB.Exec(`UPDATE websites SET deleted_at=NOW() where id=?`, id)
+	_, err := s.DB.DB().Exec(`UPDATE websites SET deleted_at=NOW() where id=?`, id)
 	return err
 }
 
 func (s *WebsiteStore) storeMatches(id api.WebsiteID, matches []*api.Match) error {
 	// NOTE there is trigger that moves those matches to matches_archive table
-	_, err := s.DB.Exec(`DELETE FROM matches WHERE website_id = ?`, id)
+	_, err := s.DB.DB().Exec(`DELETE FROM matches WHERE website_id = ?`, id)
 	if err != nil {
 		return err
 	}
@@ -281,36 +275,31 @@ func (s *WebsiteStore) storeMatches(id api.WebsiteID, matches []*api.Match) erro
 		values[i] = m.Value
 	}
 
-	_, err = s.DB.Exec(`INSERT INTO matches (pattern_id, website_id, report_id, value, created_at) VALUES `+query, values...)
+	_, err = s.DB.DB().Exec(`INSERT INTO matches (pattern_id, website_id, report_id, value, created_at) VALUES `+query, values...)
 	return err
 }
 
 func (s *WebsiteStore) AddTags(websites []*api.Website) error {
 	tags := make(map[api.WebsiteID][]*api.Tag, len(websites))
-	websiteIDs := make([]api.WebsiteID, len(websites))
+	ids := make([]string, len(websites))
 
 	for i, w := range websites {
 		tags[w.ID] = []*api.Tag{}
-		websiteIDs[i] = w.ID
+		ids[i] = w.ID.String()
 	}
 
 	if len(websites) == 0 {
 		return nil
 	}
 
-	query, args, err := sqlx.In(`
+	rows, err := s.DB.DB().Query(fmt.Sprintf(`
 		SELECT w.id, t.*
 		FROM websites w
 		INNER JOIN matches m on m.website_id = w.id
 		INNER JOIN pattern_tags pt on pt.pattern_id = m.pattern_id
 		INNER JOIN tags t on t.id = pt.tag_id
-		WHERE w.id in (?)
-	`, websiteIDs)
-	if err != nil {
-		return err
-	}
-
-	rows, err := s.DB.Query(query, args...)
+		WHERE w.id in (%s)
+	`, strings.Join(ids, ",")))
 	if err != nil {
 		return err
 	}
@@ -334,6 +323,6 @@ func (s *WebsiteStore) AddTags(websites []*api.Website) error {
 	return nil
 }
 
-func NewWebsiteStore(DB *sqlx.DB) *WebsiteStore {
+func NewWebsiteStore(DB *gorm.DB) *WebsiteStore {
 	return &WebsiteStore{DB}
 }

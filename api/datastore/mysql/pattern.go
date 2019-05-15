@@ -1,15 +1,15 @@
 package mysql
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/smilga/analyzer/api"
 )
 
 type PatternStore struct {
-	DB *sqlx.DB
+	DB *sql.DB
 }
 
 func (s *PatternStore) Save(p *api.Pattern) error {
@@ -156,6 +156,6 @@ func (s *PatternStore) updatePatternTags(id api.PatternID, tags []*api.Tag) erro
 	return err
 }
 
-func NewPatternStore(DB *sqlx.DB) *PatternStore {
+func NewPatternStore(DB *sql.DB) *PatternStore {
 	return &PatternStore{DB}
 }

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/jinzhu/gorm"
 	"github.com/smilga/analyzer/api"
 	"github.com/smilga/analyzer/api/datastore/cache"
 	"github.com/smilga/analyzer/api/datastore/mysql"
@@ -32,44 +32,47 @@ func main() {
 		createUser(db)
 	case "seed":
 		seed(db)
-	case "seed-new":
-		seedNew(db)
 	default:
 		fmt.Println("No command provided")
 	}
 }
 
-func migrate(db *sqlx.DB) {
-	sqls := readMigrations(migrationsDir)
+func migrate(db *gorm.DB) {
+	db.AutoMigrate(
+		&api.Cookie{},
+		&api.Script{},
+		&api.Link{},
+		&api.Header{},
+		&api.HTMLSource{},
+		&api.Result{},
+	)
+	// sqls := readMigrations(migrationsDir)
 
-	for _, sql := range sqls {
-		fmt.Printf("Execute: \n\n %s \n\n", sql)
-		result, err := db.Exec(sql)
-		if err != nil {
-			log.Fatal(err)
-		}
-		rows, _ := result.RowsAffected()
-		fmt.Println(rows)
-	}
+	// for _, sql := range sqls {
+	// 	fmt.Printf("Execute: \n\n %s \n\n", sql)
+	// 	result, err := db.Exec(sql)
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// 	rows, _ := result.RowsAffected()
+	// 	fmt.Println(rows)
+	// }
 }
 
-func seed(db *sqlx.DB) {
+func seed(db *gorm.DB) {
 	userRepo := mysql.NewUserStore(db)
 	err := userRepo.Save(admin)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	patternRepo := cache.NewPatternCache(mysql.NewPatternStore(db))
+	patternRepo := cache.NewPatternCache(mysql.NewPatternStore(db.DB()))
 	err = patternRepo.Save(isAlive)
 	if err != nil {
 		log.Fatal(err)
 	}
-}
 
-func seedNew(db *sqlx.DB) {
-	patternRepo := cache.NewPatternCache(mysql.NewPatternStore(db))
-	err := patternRepo.Save(hasError)
+	err = patternRepo.Save(hasError)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -94,7 +97,7 @@ func readMigrations(dir string) []string {
 	return migrations
 }
 
-func createUser(db *sqlx.DB) {
+func createUser(db *gorm.DB) {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Enter email: ")
 	email, err := reader.ReadString('\n')

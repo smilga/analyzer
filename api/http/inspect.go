@@ -23,7 +23,7 @@ func (h *Handler) InspectWebsite(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	err = h.Analyzer.Inspect(website)
+	err = h.Comm.Inspect(website)
 	if err != nil {
 		h.responseErr(w, err)
 		return
@@ -45,7 +45,7 @@ func (h *Handler) InspectAll(w http.ResponseWriter, r *http.Request, ps httprout
 	}
 
 	for _, website := range websites {
-		err = h.Analyzer.Inspect(website)
+		err = h.Comm.Inspect(website)
 		if err != nil {
 			h.responseErr(w, err)
 			return
@@ -72,7 +72,7 @@ func (h *Handler) InspectNew(w http.ResponseWriter, r *http.Request, ps httprout
 	}
 
 	for _, website := range websites {
-		err = h.Analyzer.Inspect(website)
+		err = h.Comm.Inspect(website)
 		if err != nil {
 			h.responseErr(w, err)
 			return
@@ -106,7 +106,7 @@ func (h *Handler) Inspect(w http.ResponseWriter, r *http.Request, ps httprouter.
 			return
 		}
 		if len(websites) == 1 {
-			err = h.Analyzer.Inspect(websites[0])
+			err = h.Comm.Inspect(websites[0])
 			if err != nil {
 				h.responseErr(w, err)
 				return

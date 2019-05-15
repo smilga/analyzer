@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/go-redis/redis"
-	"github.com/jmoiron/sqlx"
+	"github.com/jinzhu/gorm"
 	"github.com/smilga/analyzer/api"
+	"github.com/smilga/analyzer/api/comm"
 	"github.com/smilga/analyzer/api/datastore/cache"
 	"github.com/smilga/analyzer/api/datastore/mysql"
 	"github.com/smilga/analyzer/api/ws"
@@ -22,8 +22,9 @@ type Handler struct {
 	ServiceStorage api.ServiceStorage
 	FilterStorage  api.FilterStorage
 	ReportStorage  api.ReportStorage
-	Analyzer       *api.Analyzer
+	ResultStorage  api.ResultStorage
 	Messanger      *ws.Messanger
+	Comm           *comm.Comm
 }
 
 func (h *Handler) AuthID(r *http.Request) (api.UserID, error) {
@@ -36,15 +37,16 @@ func (h *Handler) AuthID(r *http.Request) (api.UserID, error) {
 	return uid, nil
 }
 
-func NewHandler(db *sqlx.DB) *Handler {
+func NewHandler(db *gorm.DB, comm *comm.Comm) *Handler {
 	wstore := mysql.NewWebsiteStore(db)
-	ps := mysql.NewPatternStore(db)
+	ps := mysql.NewPatternStore(db.DB())
 	us := mysql.NewUserStore(db)
 	ts := mysql.NewTagStore(db)
-	rs := mysql.NewReportStore(db)
-	fs := mysql.NewFilterStore(db)
+	rs := mysql.NewReportStore(db.DB())
+	fs := mysql.NewFilterStore(db.DB())
 	xs := mysql.NewFeatureStore(db)
 	ss := mysql.NewServiceStore(db)
+	rss := mysql.NewResultStore(db)
 	pcache := cache.NewPatternCache(ps)
 
 	return &Handler{
@@ -57,15 +59,9 @@ func NewHandler(db *sqlx.DB) *Handler {
 		ServiceStorage: ss,
 		FilterStorage:  fs,
 		ReportStorage:  rs,
-		Analyzer: &api.Analyzer{
-			PatternStorage: pcache,
-			WebsiteStorage: wstore,
-			ReportStorage:  rs,
-			Client: redis.NewClient(&redis.Options{
-				Addr: "redis:6379",
-			}),
-		},
-		Messanger: ws.NewMessanger(),
+		Messanger:      ws.NewMessanger(),
+		ResultStorage:  rss,
+		Comm:           comm,
 	}
 }
 

@@ -1,19 +1,17 @@
 package mysql
 
 import (
-	"time"
-
-	"github.com/jmoiron/sqlx"
+	"github.com/jinzhu/gorm"
 	"github.com/smilga/analyzer/api"
 )
 
 type TagStore struct {
-	DB *sqlx.DB
+	DB *gorm.DB
 }
 
 func (s *TagStore) All() ([]*api.Tag, error) {
 	ts := []*api.Tag{}
-	err := s.DB.Select(&ts, "SELECT * FROM tags WHERE deleted_at IS NULL")
+	err := s.DB.Find(&ts).Error
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +21,7 @@ func (s *TagStore) All() ([]*api.Tag, error) {
 func (s *TagStore) Get(id api.TagID) (*api.Tag, error) {
 	t := &api.Tag{}
 
-	err := s.DB.Get(t, "SELECT * FROM tags where id=? AND deleted_at IS NULL", id)
+	err := s.DB.First(&t, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -31,31 +29,9 @@ func (s *TagStore) Get(id api.TagID) (*api.Tag, error) {
 }
 
 func (s *TagStore) Save(t *api.Tag) error {
-	now := time.Now()
-	if t.ID == 0 {
-		t.CreatedAt = &now
-	}
-
-	res, err := s.DB.Exec(`
-		INSERT INTO tags (id, value, created_at, deleted_at)
-		VALUES (?, ?, ?, ?)
-	`, t.ID, t.Value, t.CreatedAt, t.DeletedAt)
-
-	if err != nil {
-		return err
-	}
-
-	if t.ID == 0 {
-		id, err := res.LastInsertId()
-		if err != nil {
-			return err
-		}
-		t.ID = api.TagID(id)
-	}
-
-	return nil
+	return s.DB.Create(t).Error
 }
 
-func NewTagStore(DB *sqlx.DB) *TagStore {
+func NewTagStore(DB *gorm.DB) *TagStore {
 	return &TagStore{DB}
 }
