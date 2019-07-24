@@ -64,7 +64,7 @@ func (c *Comm) Inspect(w *api.Website) error {
 	return nil
 }
 
-func NewComm() *Comm {
+func New() *Comm {
 	return &Comm{
 		Client: redis.NewClient(&redis.Options{
 			Addr: "redis:6379",

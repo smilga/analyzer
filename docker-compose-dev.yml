@@ -49,6 +49,8 @@ services:
             - API_PORT=${API_PORT}
             - WEB_DOMAIN=${WEB_DOMAIN}
         command: sh -c "npm rebuild > /dev/null && API_PORT=${API_PORT} npm run dev"
+        ports:
+            - "3000:3000"
 
     api:
         build:
@@ -94,4 +96,3 @@ services:
 volumes:
     db-data:
     redis-data:
-

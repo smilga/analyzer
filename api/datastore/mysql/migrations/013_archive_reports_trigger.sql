@@ -1,3 +1,4 @@
+/*
 delimiter //
 CREATE TRIGGER archive_reports
 AFTER DELETE
@@ -7,3 +8,4 @@ BEGIN
   VALUES (old.user_id, old.website_id, old.started_in, old.loaded_in, old.resource_check_in, old.html_check_in, old.total_in, old.created_at, NOW());
 END ; //
 delimiter ;
+*/

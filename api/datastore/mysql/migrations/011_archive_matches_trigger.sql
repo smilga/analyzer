@@ -1,3 +1,4 @@
+/*
 delimiter //
 CREATE TRIGGER archive_matches
 AFTER DELETE
@@ -7,3 +8,4 @@ BEGIN
   VALUES (old.pattern_id, old.website_id, old.report_id, old.value, old.created_at, NOW());
 END ; //
 delimiter ;
+*/

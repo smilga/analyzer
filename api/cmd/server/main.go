@@ -18,7 +18,7 @@ import (
 func main() {
 	router := httprouter.New()
 
-	comm := comm.NewComm()
+	comm := comm.New()
 
 	g := http.NewGuard(&http.GuardConfig{
 		Auth:    http.NewJWTAuth(os.Getenv("JWT_SECRET")),

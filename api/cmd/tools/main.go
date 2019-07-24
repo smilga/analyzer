@@ -46,17 +46,17 @@ func migrate(db *gorm.DB) {
 		&api.HTMLSource{},
 		&api.Result{},
 	)
-	// sqls := readMigrations(migrationsDir)
+	sqls := readMigrations(migrationsDir)
 
-	// for _, sql := range sqls {
-	// 	fmt.Printf("Execute: \n\n %s \n\n", sql)
-	// 	result, err := db.Exec(sql)
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// 	rows, _ := result.RowsAffected()
-	// 	fmt.Println(rows)
-	// }
+	for _, sql := range sqls {
+		fmt.Printf("Execute: \n\n %s \n\n", sql)
+		result, err := db.DB().Exec(sql)
+		if err != nil {
+			log.Fatal(err)
+		}
+		rows, _ := result.RowsAffected()
+		fmt.Println(rows)
+	}
 }
 
 func seed(db *gorm.DB) {
